@@ -35,6 +35,14 @@
     return stem + '.from-phone-' + Date.now() + ext;
   }
   const isCopy = (rel) => /\.from-phone(-\d+)?(\.[^./]+)?$/.test(rel);
+  function unstamped(t) {
+    const s = String(t == null ? '' : t).replace(/\r\n/g, '\n');
+    if (s.indexOf('---\n') !== 0) return s;
+    const end = s.indexOf('\n---', 3);
+    if (end < 0) return s;
+    return s.slice(0, end).split('\n').filter((l) => !/^touched: /.test(l)).join('\n') + s.slice(end);
+  }
+  const stampOnly = (a, b) => a != null && b != null && unstamped(a) === unstamped(b);
   const synced = (rel) => PATHS.some((p) => rel === p.path || rel.indexOf(p.path + '/') === 0);
   const MAPS = ['decisions', 'skipped', 'imported', 'suggest', 'checked'];
   function stamp(v) {
@@ -80,5 +88,5 @@
     if (s < 86400) return Math.round(s / 3600) + ' h ago';
     return Math.round(s / 86400) + ' days ago';
   }
-  return { WORKBENCH, CANON_DIR, DECISIONS, PATHS, MAX_FILE, BLOCK, gitignoreWith, hasBlock, copyName, isCopy, synced, mergeDecisions, statusLine, stamp };
+  return { WORKBENCH, CANON_DIR, DECISIONS, PATHS, MAX_FILE, BLOCK, gitignoreWith, hasBlock, copyName, isCopy, stampOnly, synced, mergeDecisions, statusLine, stamp };
 });

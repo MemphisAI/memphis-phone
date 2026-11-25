@@ -101,6 +101,7 @@
     const line = s.running ? 'Syncing with GitHub...' : s.pending ? s.pending + (s.pending === 1 ? ' change is' : ' changes are') + ' not synced yet.' : s.lastOk ? 'All synced, ' + SM.statusLine({ enabled: true, lastOk: s.lastOk }).replace(/^Synced with GitHub /, '').replace(/\.$/, '') + '.' : 'Not synced yet.';
     sy.appendChild(el('p', 'line', esc(line)));
     if (s.lastError) sy.appendChild(el('p', 'msg', esc(s.lastError)));
+    if (s.lastTook && s.lastTook.ms != null) sy.appendChild(el('p', 'fine', esc('The last sync took ' + Math.max(1, Math.round(s.lastTook.ms / 1000)) + ' s (taking in ' + Math.round((s.lastTook.pullMs || 0) / 1000) + ' s): ' + (s.lastTook.pulled || 0) + ' in, ' + (s.lastTook.pushed || 0) + ' out.')));
     const row = el('div', 'row');
     row.appendChild(btn('gold', 'Sync now', () => syncNow(true), { disabled: s.running }));
     if (s.pending) row.appendChild(btn('coal', 'Export unsynced', exportUnsynced));

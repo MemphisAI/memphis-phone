@@ -59,3 +59,5 @@ html.kb .statusbar,html.kb .fabs,html.kb .inscol{display:none!important}
 .inscol{top:auto;bottom:calc(78px + env(safe-area-inset-bottom));left:10px;transform:none;flex-direction:row;gap:8px}
 .fabs{right:10px;bottom:calc(72px + env(safe-area-inset-bottom))}
 .statusbar{padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+.wr-c-bar{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--edge)}
+.wr-c-bar .bl-btn.sure{outline:2px solid var(--bl-gold)}

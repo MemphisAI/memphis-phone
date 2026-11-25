@@ -36,8 +36,9 @@
       if (beside.has(rel)) { await E.write(beside.get(rel), text); return { ok: true, path: beside.get(rel) }; }
       const cur = await E.read(p);
       if (text === cur) { seen.set(rel, text); return { ok: true, path: p }; }
+      if (SM.stampOnly(text, cur)) { seen.set(rel, cur); return { ok: true, path: p }; }
       const was = seen.has(rel) ? seen.get(rel) : null;
-      if (cur != null && cur !== was) {
+      if (cur != null && cur !== was && !(was != null && SM.stampOnly(cur, was))) {
         if (text === was) return { ok: true, path: p };
         if (rel === 'book.json' && was != null) {
           const m = mergeBook(was, cur, text);
@@ -83,7 +84,7 @@
   }
   async function stale() {
     const out = [];
-    for (const [rel, text] of seen) { if (beside.has(rel)) continue; const cur = await E.read(DIR + '/' + rel); if (cur !== text) out.push(rel); }
+    for (const [rel, text] of seen) { if (beside.has(rel)) continue; const cur = await E.read(DIR + '/' + rel); if (cur !== text && !SM.stampOnly(cur, text)) out.push(rel); }
     for (const f of await top()) if (!seen.has(f) && !SM.isCopy(f)) out.push(f);
     return out;
   }

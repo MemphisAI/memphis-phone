@@ -30,7 +30,7 @@
     head.appendChild(Ph.btn('coal', 'Close', () => box.remove()));
     box.appendChild(head);
     const body = Ph.el('div', 'nv-text');
-    body.appendChild(Ph.el('p', 'wr-c-help', 'These changed on both Alaric and this phone. The chapter shows Alaric\'s version; what was written here is kept beside it, word for word. Copy what you need into the chapter, then remove the copy on Alaric.'));
+    body.appendChild(Ph.el('p', 'wr-c-help', 'These changed on both Alaric and this phone. The chapter shows one version; the other is kept beside it, word for word. Open one to read it: Use this version swaps the two (nothing is lost), and Remove the copy takes it away once you are sure.'));
     for (const p of list) {
       const b = Ph.btn('coal wide', chapterOf(p) + ': ' + p.split('/').pop(), () => openCopy(p, box));
       body.appendChild(b);
@@ -42,16 +42,47 @@
     const text = (await E.read(p)) || '';
     const prose = text.replace(/^---\n[\s\S]*?\n---\n?/, '').replace(/^<!-- plate(?:: .*?)? -->[ \t]*\r?\n?/gm, '');
     const box = Ph.el('div', 'noteview');
-    const head = Ph.el('div', 'nv-head', '<b>' + Ph.esc(chapterOf(p)) + ', written here</b>');
-    head.appendChild(Ph.btn('gold sm', 'Copy text', async () => {
-      try { await navigator.clipboard.writeText(prose); Ph.toast('Copied. Paste it into the chapter where it belongs.'); }
-      catch (e) { Ph.toast('Could not copy here: select the text instead.'); }
-    }));
+    const head = Ph.el('div', 'nv-head', '<b>' + Ph.esc(chapterOf(p)) + ', the copy kept beside</b>');
     head.appendChild(Ph.btn('coal sm', 'Close', () => box.remove()));
     box.appendChild(head);
+    const bar = Ph.el('div', 'wr-c-bar');
+    const use = Ph.btn('gold sm', 'Use this version', () => twice(use, 'Tap again to swap them', () => swap(p, box)));
+    const del = Ph.btn('coal sm', 'Remove the copy', () => twice(del, 'Tap again to remove it', () => drop(p, box)));
+    const cp = Ph.btn('coal sm', 'Copy text', async () => {
+      try { await navigator.clipboard.writeText(prose); Ph.toast('Copied.'); }
+      catch (e) { Ph.toast('Could not copy here: select the text instead.'); }
+    });
+    bar.append(use, del, cp);
+    box.appendChild(bar);
     box.appendChild(Ph.el('pre', 'nv-text', Ph.esc(prose)));
     document.body.appendChild(box);
     if (listBox) listBox.remove();
+  }
+  function twice(b, sure, go) {
+    if (!b.classList.contains('sure')) {
+      const was = b.textContent; b.classList.add('sure'); b.textContent = sure;
+      setTimeout(() => { if (b.classList.contains('sure')) { b.classList.remove('sure'); b.textContent = was; } }, 6000);
+      return;
+    }
+    b.classList.remove('sure'); go();
+  }
+  const pageOf = (p) => p.replace(/\.from-phone(-\d+)?(\.[^./]+)$/, '$2');
+  async function swap(p, box) {
+    const page = pageOf(p);
+    await W.saveAll(3000);
+    const mine = await E.read(p), theirs = await E.read(page);
+    if (mine == null) { Ph.toast('That copy is gone.'); box.remove(); return; }
+    await E.write(page, mine);
+    if (theirs != null) await E.write(p, theirs); else await E.remove(p);
+    Ph.toast(chapterOf(p) + ' now has that version. The other one is kept beside it until you remove it.', 5000);
+    box.remove();
+    takeAlaric();
+  }
+  async function drop(p, box) {
+    try { await E.remove(p); } catch (e) { Ph.toast(String(e.message || e)); return; }
+    Ph.toast('The copy is removed. It goes from Alaric at the next sync.');
+    box.remove();
+    drawCopies();
   }
   copiesBtn.addEventListener('click', showCopies);
   document.addEventListener('writer-copy', (e) => {

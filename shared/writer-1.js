@@ -215,6 +215,7 @@ function startPlateDrag(e,i){
 const NUM=["One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve"];
 const SEED = {books:[]};
 let STRUCT = {books:[]};
+const _diskMd={};
 let ALL=[];
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 let _idc=0, _idmap=new Map();
@@ -268,7 +269,7 @@ async function loadBook(){
               +'Your chapter text loaded normally and still saves. book.json is left untouched; the previous version is in book.json.bak.';
           }
         }
-        for(const fn in files){ if(/^Ch-\d+\.md$/.test(fn)) chapterMd[fn]=files[fn]; }
+        for(const fn in files){ if(/^Ch-\d+\.md$/.test(fn)){ chapterMd[fn]=files[fn]; _diskMd[fn]=String(files[fn]).split(String.fromCharCode(13)).join(''); } }
       } else {
         SAVE_LOCK='all';
         LOAD_PROBLEM='The Manuscript folder could not be read'+(all&&all.reason?' ('+all.reason+')':'')
@@ -1172,14 +1173,16 @@ function doSave(){
   const chs=[..._pendingCh]; _pendingCh.clear();
   const jobs=chs.map(ch=>{
     if(proseOf(ch.draft).trim() && ch.state==='blank') ch.state='started';
+    const file=chapterFile(ch.n);
+    if(_diskMd[file]!=null ? _diskMd[file]===buildChapterMd(ch) : (!String(ch.draft||'').trim() && (ch.state||'blank')==='blank' && !ch.loop)) return null;
     ch._touched=Date.now();
-    return {ch, file:chapterFile(ch.n), text:buildChapterMd(ch)};
-  });
+    return {ch, file, text:buildChapterMd(ch)};
+  }).filter(Boolean);
   const bj = SAVE_LOCK==='structure' ? null : bookJsonText();
   saveLabel.textContent='Saving…';
   _saveChain=_saveChain.then(async()=>{
     const failed=[];
-    for(const j of jobs){ try{ await mustWrite(j.file, j.text); }catch(e){ failed.push(j.ch); console.error('save failed',j.file,e); } }
+    for(const j of jobs){ try{ await mustWrite(j.file, j.text); _diskMd[j.file]=j.text; }catch(e){ failed.push(j.ch); console.error('save failed',j.file,e); } }
     let bjFail=false;
     if(bj!=null){ try{ await mustWrite('book.json', bj); }catch(e){ bjFail=true; console.error('save failed book.json',e); } }
     if(failed.length || bjFail){
