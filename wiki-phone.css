@@ -1,0 +1,57 @@
+
+:root{--left:0px;--right:0px;--bar:52px;--tools:calc(112px + env(safe-area-inset-bottom))}
+[hidden]{display:none!important}
+html,body{overflow:hidden}
+body{padding:0}
+#bar{position:fixed;left:0;right:0;top:var(--top);height:var(--bar);z-index:12;display:flex;align-items:center;gap:8px;
+  padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));
+  background:rgba(6,6,5,.94);border-bottom:1px solid var(--edge);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#bar .spacer{flex:1}
+#bar .bl-btn.sm{min-height:44px;padding:0 14px;font-size:14px}
+#bar .bl-btn.on{color:var(--bl-gold-hi);border-color:rgba(217,165,46,.55)}
+#page{position:fixed;left:0;right:0;top:calc(var(--top) + var(--bar));bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pg,.pg.has-margin,.pg.index,.pg:not(.index):not(.landing),.pg.has-margin:not(.index):not(.landing){max-width:none;
+  padding:20px max(16px,env(safe-area-inset-right)) calc(var(--tools) + 40px) max(16px,env(safe-area-inset-left))}
+.pg h1{font-size:28px;line-height:1.15;overflow-wrap:anywhere}
+.has-margin .cols,.cols{grid-template-columns:minmax(0,1fr)}
+.margin{position:static}
+.ksplit,.ix-suits,.ix-row,.pk-grid{grid-template-columns:1fr}
+a.wl,a.chip,a.prow,a.ftile,a.ix-f{-webkit-touch-callout:none}
+a.prow,.krow{min-height:44px}
+table{display:block;overflow-x:auto}
+.scrim{position:fixed;inset:0;z-index:24;background:rgba(0,0,0,.5)}
+.strip.left,.strip.left:hover,.strip.left:focus-within,
+.strip.right,.strip.right:hover,.strip.right:focus-within{top:calc(var(--top) + var(--bar));bottom:0;width:min(320px,86vw);z-index:26;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;transition:transform .22s var(--ease);box-shadow:none}
+.strip.left,.strip.left:hover,.strip.left:focus-within{transform:translateX(-102%);padding:12px 0 calc(24px + env(safe-area-inset-bottom))}
+.strip.right,.strip.right:hover,.strip.right:focus-within{transform:translateX(102%);padding:12px 18px calc(24px + env(safe-area-inset-bottom))}
+body.dr-left .strip.left,body.dr-right .strip.right{transform:none;box-shadow:0 0 60px -10px #000}
+.strip .nm,.strip .ct,.strip .nt,.strip .rh,.strip .seg,.brand .nm{opacity:1}
+.strip.left{--left:52px}   
+.fo{height:48px;font-size:15px}
+.fo .nm{font-size:15px}
+.lay,.strip.right:hover .lay,.strip.right:focus-within .lay{min-height:52px;grid-template-columns:32px 1fr}
+.lay .nm{font-size:15px}
+#s-right .seg,#s-right .rh:first-child,#s-right .lay:disabled{display:none}
+.strip.bottom,.strip.bottom:hover,.strip.bottom.pin,.strip.bottom:focus-within{left:0;right:0;bottom:0;height:var(--tools);z-index:14;
+  padding:8px max(12px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(12px,env(safe-area-inset-left));background:rgba(14,13,11,.96);border-top:1px solid var(--edge)}
+.strip.bottom::before{display:none}
+.tools,.strip.bottom:hover .tools{opacity:1;flex-wrap:wrap;align-content:flex-start;justify-content:flex-start;height:auto;gap:8px;padding:0}
+.tools .bl-btn.sm{flex:1 1 0;min-width:0;min-height:44px;justify-content:center;font-size:14px;padding:0 10px}
+.tools .bl-btn[hidden],#t-vault,#t-rename{display:none!important}
+.find{order:9;width:100%;flex:1 1 100%;height:44px}
+.find input{font-size:16px}   
+.find input::-webkit-search-cancel-button{display:none}
+.find-list{position:absolute;left:0;right:0;bottom:52px;transform:none;width:auto;max-height:min(50vh,360px);z-index:16}
+.hit{min-height:48px;font-size:15px}
+body:has(#page textarea:focus) .strip.bottom,body:has(#page input:focus) .strip.bottom{display:none}
+body:has(#page .editor) .strip.bottom{display:none}
+body:has(#page .editor) .pg{padding-bottom:24px}
+.ed-bar{bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+.ed-bar .bl-btn{flex:1 1 0;justify-content:center;min-height:48px}
+.ed-ta{font-size:16px}
+.ed-tabs{overflow-x:auto;white-space:nowrap}
+.ed-tabs .bl-tab{min-height:44px}
+.wk-dlg{padding:18px 16px 8px;max-height:calc(100dvh - var(--top) - 24px)}
+.status{bottom:calc(var(--tools) + 12px);max-width:calc(100vw - 32px)}
+.toast{bottom:calc(var(--tools) + 12px);z-index:40}
