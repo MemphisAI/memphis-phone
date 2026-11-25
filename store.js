@@ -4,7 +4,6 @@
   else root.PhoneStore = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   const TABLES = ['files', 'outbox', 'meta'];
-
   function memory() {
     const t = { files: new Map(), outbox: new Map(), meta: new Map() };
     const copy = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)));
@@ -17,7 +16,6 @@
       clear: async (tb) => { t[tb].clear(); },
     };
   }
-
   function idb(name) {
     let dbp = null;
     const open = () => dbp || (dbp = new Promise((resolve, reject) => {
@@ -43,6 +41,5 @@
       clear: (tb) => run(tb, 'readwrite', (s) => s.clear()).then(() => undefined),
     };
   }
-
   return { memory, idb, TABLES };
 });

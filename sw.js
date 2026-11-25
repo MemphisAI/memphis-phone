@@ -1,8 +1,7 @@
 'use strict';
-const VERSION = "6f3e19bde70d";
-const FILES = ["./","app.js","apps.js","branding/blades-icons.js","branding/blades-ui.css","branding/fonts/jura-400.woff2","branding/fonts/jura-600.woff2","branding/fonts/jura-700.woff2","branding/fonts/jura-OFL.txt","canon-bridge.js","canon-phone.css","canon.html","changes-phone.css","changes.html","changes.js","engine.js","github.js","icons/memphis-app-2048.png","icons/memphis-app-256.png","index.html","manifest.webmanifest","phone-shell.css","phone.css","shared/canon-model.js","shared/canon-ui.js","shared/canon.css","shared/sync-model.js","shared/wiki-edit.js","shared/wiki-model.js","shared/wiki-pages.js","shared/wiki-sets-ui.js","shared/wiki-sets.js","shared/wiki-ui.js","shared/wiki.css","store.js","wiki-bridge.js","wiki-phone.css","wiki-phone.js","wiki.html"];
+const VERSION = "f4a194afbcb7";
+const FILES = ["./","app.js","apps.js","branding/blades-book1.svg","branding/blades-book2.svg","branding/blades-book3.svg","branding/blades-icons.js","branding/blades-logo-dark.svg","branding/blades-logo-mono.svg","branding/blades-ui.css","branding/fonts/jura-400.woff2","branding/fonts/jura-600.woff2","branding/fonts/jura-700.woff2","branding/fonts/jura-OFL.txt","canon-bridge.js","canon-phone.css","canon.html","changes-phone.css","changes.html","changes.js","engine.js","github.js","icons/memphis-app-2048.png","icons/memphis-app-256.png","index.html","manifest.webmanifest","phone-shell.css","phone.css","shared/canon-model.js","shared/canon-ui.js","shared/canon.css","shared/sync-model.js","shared/wiki-edit.js","shared/wiki-model.js","shared/wiki-pages.js","shared/wiki-sets-ui.js","shared/wiki-sets.js","shared/wiki-ui.js","shared/wiki.css","shared/writer-1.js","shared/writer-2.js","shared/writer-notes.js","shared/writer.css","store.js","wiki-bridge.js","wiki-phone.css","wiki-phone.js","wiki.html","writer-bridge.js","writer-phone.css","writer-phone.js","writer.html"];
 const CACHE = 'memphis-phone-' + VERSION;
-
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
 });
@@ -11,7 +10,7 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
-  if (u.hostname === 'api.github.com' || e.request.method !== 'GET') return;   // never kept: always the network
+  if (u.hostname === 'api.github.com' || e.request.method !== 'GET') return;
   if (u.origin !== self.location.origin) return;
   e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request).then((r) => {
     if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }

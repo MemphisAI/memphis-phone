@@ -1,8 +1,7 @@
 'use strict';
 (function (root) {
-  const STRIP = /[\u2600-\u27BF\uFE0F\u200D]|[\uD83C-\uDBFF][\uDC00-\uDFFF]/g;   // no emojis in the room
+  const STRIP = /[\u2600-\u27BF\uFE0F\u200D]|[\uD83C-\uDBFF][\uDC00-\uDFFF]/g;
   const clean = (s) => String(s || '').replace(STRIP, '').replace(/\s+/g, ' ').trim();
-
   const RX = {
     title: /^#\s+(.+)$/,
     section: /^##\s+(.*)$/,
@@ -13,7 +12,6 @@
     quote: /^\s*>\s?(.*)$/,
     link: /\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g,
   };
-
   function splitMeta(s) {
     const i = s.lastIndexOf(' — *');
     if (i < 0) return { text: s.trim(), meta: '' };
@@ -26,7 +24,6 @@
     while ((m = RX.link.exec(String(s || '')))) out.push(m[1].trim());
     return out;
   }
-
   function parseNote(rel, text) {
     rel = String(rel || '').replace(/\\/g, '/');
     const parts = rel.split('/');
@@ -69,9 +66,7 @@
     });
     return note;
   }
-
   const domainName = (d) => String(d || '').replace(/^\d+\s+/, '');
-
   function build(files) {
     const notes = (files || []).map((f) => parseNote(f.rel, f.text)).filter((n) => n.questions.length);
     const by = new Map();
@@ -84,7 +79,6 @@
     for (const d of domains) for (const q of d.questions) byKey[q.key] = q;
     return { domains, byKey };
   }
-
   function emptyState() { return { schema: 1, decisions: {}, skipped: {}, imported: {}, suggest: {}, checked: {} }; }
   function normState(s) {
     const o = emptyState();
@@ -97,7 +91,6 @@
     return { kind: answer.kind, letters: (answer.letters || []).slice(), text: String(answer.text || '').trim(), at, from: from || 'canon',
       domain: q.domain, subject: q.subject, rel: q.rel, question: q.text };
   }
-
   function importTicks(model, state, now) {
     const s = normState(state); let added = 0;
     for (const d of model.domains) for (const q of d.questions) {
@@ -113,7 +106,6 @@
     }
     return { state: s, added };
   }
-
   function decide(state, q, answer, now) {
     const s = normState(state);
     if (!q || !answer) throw new Error('nothing to decide');
@@ -139,21 +131,19 @@
   function reopen(state, key) {
     const s = normState(state);
     delete s.decisions[key]; delete s.skipped[key]; s.imported[key] = true;
-    s.suggest[key] = { dismissed: true, at: iso() };   // reopened: his to decide, not suggested again
+    s.suggest[key] = { dismissed: true, at: iso() };
     return s;
   }
   function skip(state, key, now) { const s = normState(state); s.skipped[key] = now == null ? Date.now() : now; return s; }
-
   const plain = (s) => String(s || '').replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, (_m, n, l) => (l || n).trim()).replace(/\*\*?([^*]+)\*\*?/g, '$1').replace(/\s+([;,.])/g, '$1').trim();
   function mergeDraft(q, letters) {
     return q.options.filter((o) => (letters || []).includes(o.letter)).map((o) => plain(o.text)).join('\n\n');
   }
-
   function queue(model, state, domainId) {
     const s = normState(state);
     const d = model.domains.find((x) => x.id === domainId);
     if (!d) return [];
-    const open = d.questions.filter((q) => !s.decisions[q.key] && !isSuggested(s, q.key));   // step 3: the batch comes first
+    const open = d.questions.filter((q) => !s.decisions[q.key] && !isSuggested(s, q.key));
     const fresh = open.filter((q) => s.skipped[q.key] == null);
     const later = open.filter((q) => s.skipped[q.key] != null).sort((a, b) => s.skipped[a.key] - s.skipped[b.key]);
     return fresh.concat(later);
@@ -172,7 +162,6 @@
     return Object.keys(s.decisions).map((key) => Object.assign({ key, live: !!model.byKey[key] }, s.decisions[key]))
       .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   }
-
   const PLACED = ['page', 'copy', 'proposed', 'ask', 'already', 'waiting'];
   function setPlaced(state, key, placed, now) {
     const s = normState(state);
@@ -213,7 +202,6 @@
     if (o.where === 'new') return 'A new page: ' + o.title;
     return '';
   }
-
   const stale = (v) => !!(v && !v.dismissed && !v.quote);
   const isSuggested = (s, key) => !!(s.suggest[key] && !s.suggest[key].dismissed && !stale(s.suggest[key]));
   const inDomain = (key, domainId) => key.slice(0, domainId.length + 1) === domainId + '/';
@@ -257,7 +245,6 @@
     const decided = Object.keys(s.decisions).map((k) => ({ subject: s.decisions[k].subject, question: s.decisions[k].question, text: plain(s.decisions[k].text) }));
     return { domain: domainId, questions, decided };
   }
-
   const api = { proposedTitles, needsCheck, setSuggestions, suggestions, confirm, dismiss, settledRequest, setPlaced, asking, placeRequest, placeLabel, optionLabel, parseNote, build, domainName, emptyState, normState, importTicks, decide, reopen, skip, mergeDraft, queue, progress, log, splitMeta, linksOf, clean, plain };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CanonModel = api;

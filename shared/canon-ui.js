@@ -1,14 +1,13 @@
 'use strict';
 (function () {
   const M = window.CanonModel, API = window.canonAPI;
-  const PHONE = !!API.phone;   // phone step 3: the same room on the phone (no Memphis there; Alaric places the answers later)
+  const PHONE = !!API.phone;
   const $ = (id) => document.getElementById(id);
   const view = $('view'), crumb = $('crumb'), home = $('b-home'), toastEl = $('toast');
   let model = { domains: [], byKey: {} }, state = M.emptyState(), where = '', error = '';
-  let screen = { name: 'home' };            // { name: 'home' } | { name: 'card', domain } | { name: 'log' }
-  let pick = new Set(), editor = null;       // the versions chosen on the card; null | 'merge' | 'own'
+  let screen = { name: 'home' };
+  let pick = new Set(), editor = null;
   let editorText = '';
-
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function inline(s) {
     let h = esc(s);
@@ -23,7 +22,6 @@
     if (opts && opts.key) b.title = label + ' (' + opts.key + ')';
     b.addEventListener('click', fn); return b;
   }
-
   let toastT = null;
   function toast(text, actions, ms) {
     toastEl.innerHTML = '';
@@ -33,7 +31,6 @@
     toastEl.classList.add('on');
     clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), ms || (list.length ? 9000 : 3500));
   }
-
   let chain = Promise.resolve();
   function commit(fn, done) {
     const run = chain.then(async () => {
@@ -41,7 +38,7 @@
       try { next = fn(state); } catch (e) { toast(String(e.message || e)); return false; }
       const r = await API.save(next).catch((e) => ({ ok: false, error: String(e && e.message || e) }));
       if (!r || !r.ok) { toast('Could not save: ' + ((r && r.error) || 'unknown')); return false; }
-      state = r.state ? M.normState(r.state) : next;   // phone step 1: the phone's answers merged in on save
+      state = r.state ? M.normState(r.state) : next;
       if (r.merged) toast('Answers from the phone were merged in');
       if (done) done(state); return true;
     });
@@ -49,10 +46,9 @@
     return run;
   }
   const save = (next, done) => commit(() => next, done);
-
   let ws = null, live = false, nextId = 0;
   const waiting = new Map();
-  const placing = new Set();   // keys on their way to the wiki
+  const placing = new Set();
   function b64(str) {
     const bytes = new TextEncoder().encode(str); let s = '';
     for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
@@ -61,7 +57,7 @@
   function unb64(s) { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
   function connect() {
     try { ws = new WebSocket('ws://127.0.0.1:8777'); } catch (e) { setTimeout(connect, 2500); return; }
-    ws.onopen = () => { live = true; soft(); };   // B-192: redraw, or the buttons stay greyed out as if Memphis were off
+    ws.onopen = () => { live = true; soft(); };
     ws.addEventListener('open', () => placeFromPhone());
     ws.onmessage = (m) => {
       const raw = String(m.data || '');
@@ -71,7 +67,7 @@
       if (w) { waiting.delete(o.id); clearTimeout(w.t); w.resolve(o); }
     };
     ws.onclose = () => { const was = live; live = false; ws = null; if (was) soft(); for (const [id, w] of waiting) { clearTimeout(w.t); w.reject(new Error('Memphis stopped answering.')); waiting.delete(id); } setTimeout(connect, 2500); };
-    ws.onerror = () => { try { ws.close(); } catch (e) { /* closing */ } };
+    ws.onerror = () => { try { ws.close(); } catch (e) {   } };
   }
   function ask(action, payload, ms) {
     return new Promise((resolve, reject) => {
@@ -82,7 +78,6 @@
       ws.send('savenote:' + b64(JSON.stringify(Object.assign({ action, id }, payload || {}))));
     }).then((r) => { if (!r || !r.ok) throw new Error((r && r.error) || 'Memphis could not do it'); return r; });
   }
-
   function short(t, n) { t = String(t || ''); return t.length > (n || 70) ? t.slice(0, (n || 70) - 3) + '...' : t; }
   function copyText(t) {
     const done = () => toast('Copied. Paste it into the note by hand.');
@@ -126,7 +121,6 @@
       for (const k of keys) { if (!live) break; await place(k, true); }
     } finally { phoneRun = false; }
   }
-
   async function settle(key, option) {
     const dec = state.decisions[key]; if (!dec || placing.has(key)) return;
     placing.add(key); soft();
@@ -152,9 +146,8 @@
     else if (p && p.kind === 'copy') toast('Reopened. If you pasted the line into ' + p.label + ', take it out there.');
     else if (p && p.kind === 'page') toast('Reopened, and taken off ' + p.page + "'s page.");
   }
-
-  const checking = new Set();   // domains being read now
-  let checkAllRun = null;       // { at, of } while Find what is already settled runs
+  const checking = new Set();
+  let checkAllRun = null;
   async function check(domainId, quiet) {
     if (checking.has(domainId) || !live) return 0;
     const req = M.settledRequest(model, state, domainId);
@@ -202,7 +195,7 @@
       row.innerHTML = '<div class="what">' + (domainId ? '' : '<span class="dm">' + esc(M.domainName(it.q.domain)) + '</span> ') + '<span class="sj">' + inline(it.q.subject) + '</span></div>' +
         '<div class="qq">' + inline(it.q.text) + '</div>' +
         '<div class="ans">' + (it.letter ? '<span class="lt">' + esc(it.letter) + '</span> ' : '') + inline(it.text) + '</div>' +
-        (it.quote ? '<blockquote class="qt">' + inline(it.quote) + '</blockquote>' : '') +   // B-193: the line that settles it
+        (it.quote ? '<blockquote class="qt">' + inline(it.quote) + '</blockquote>' : '') +
         ((it.page || it.why) ? '<div class="why">' + esc(it.page === 'decision' ? 'Your decision' : it.page ? it.page + ' page' : '') + (it.page && it.why ? ': ' : '') + esc(it.why || '') + '</div>' : '');
       const acts = el('div', 'acts');
       acts.appendChild(btn('bone sm', 'Confirm', () => confirmKeys([it.key])));
@@ -213,7 +206,6 @@
     if (list.length > 40) box.appendChild(el('p', 'busy', esc((list.length - 40) + ' more after these')));
     return box;
   }
-
   let sync = null, syncPv = null, syncBusy = false;
   const size = (b) => (b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB');
   function syncBox() {
@@ -255,7 +247,6 @@
     toast(r && r.ok ? (r.pulled ? 'Synced: changes from GitHub taken in' : 'Synced with GitHub') : 'Sync did not finish: ' + ((r && r.error) || 'unknown'));
     soft();
   }
-
   function askBox() {
     const list = M.asking(state);
     if (!list.length) return null;
@@ -276,7 +267,6 @@
     }
     return box;
   }
-
   async function load(keepScreen) {
     const r = await API.read().catch((e) => ({ ok: false, error: String(e && e.message || e) }));
     if (!r || !r.ok) { error = (r && r.error) || 'The workbench could not be read.'; render(); return; }
@@ -290,7 +280,6 @@
     render();
     placeFromPhone();
   }
-
   function render() {
     view.innerHTML = '';
     home.hidden = screen.name === 'home';
@@ -299,7 +288,6 @@
     if (screen.name === 'card') return renderCard();
     renderHome();
   }
-
   function renderHome() {
     const p = M.progress(model, state);
     crumb.textContent = 'Canon';
@@ -331,14 +319,11 @@
     view.appendChild(grid);
     if (where) view.appendChild(el('p', 'where', 'Reading the workbench in ' + esc(where) + '. The notes are never changed here.'));
   }
-
   function openDomain(id) {
     screen = { name: 'card', domain: id }; pick = new Set(); editor = null; editorText = ''; render(); view.focus();
-    if (live && M.needsCheck(state, id)) check(id);   // step 3: a domain is read once, the first time it is opened
+    if (live && M.needsCheck(state, id)) check(id);
   }
-
   function current() { return M.queue(model, state, screen.domain)[0] || null; }
-
   function renderCard() {
     const d = model.domains.find((x) => x.id === screen.domain);
     const p = M.progress(model, state).domains.find((x) => x.id === screen.domain) || { left: 0, total: 0 };
@@ -347,7 +332,7 @@
     const ab = askBox(); if (ab) view.appendChild(ab);
     const sb = settledBox(screen.domain); if (sb) view.appendChild(sb);
     if (!q) {
-      if (sb) return;   // only the batch is left
+      if (sb) return;
       view.appendChild(el('div', 'empty', '<h1>' + esc(d ? d.name : '') + '</h1><p>Every decision in this domain is made.</p>'));
       view.appendChild(btn('gold', 'Back to the domains', goHome));
       return;
@@ -377,7 +362,6 @@
       card.appendChild(ul);
     }
     if (q.hint) card.appendChild(el('p', 'hint', inline(q.hint)));
-
     if (editor) {
       const box = el('div', 'editor');
       box.appendChild(el('label', 'lb', editor === 'merge' ? 'Merge ' + esc([...pick].sort().join(' and ')) + ' into one version' : 'Your version'));
@@ -405,7 +389,6 @@
       : 'Write the canon, or skip and come back to it.'));
     view.appendChild(card);
   }
-
   function toggle(letter) { if (pick.has(letter)) pick.delete(letter); else pick.add(letter); render(); }
   function startMerge() { const q = current(); if (!q || pick.size < 2) return; editor = 'merge'; editorText = M.mergeDraft(q, [...pick]); render(); }
   function startOwn() { editor = 'own'; editorText = ''; render(); }
@@ -431,7 +414,6 @@
       render();
     });
   }
-
   function renderLog() {
     crumb.textContent = 'Decision log';
     const items = M.log(model, state);
@@ -461,17 +443,14 @@
       view.appendChild(row);
     }
   }
-
   function goHome() { screen = { name: 'home' }; pick = new Set(); editor = null; render(); }
   home.addEventListener('click', goHome);
   $('b-log').addEventListener('click', () => { screen = { name: 'log' }; editor = null; render(); });
-
   view.addEventListener('click', (e) => {
     const a = e.target.closest('a.src'); if (!a) return;
     e.preventDefault(); e.stopPropagation();
     API.openNote(a.dataset.note).then((r) => { if (!r || !r.ok) toast('Could not open ' + a.dataset.note); });
   });
-
   document.addEventListener('keydown', (e) => {
     if (e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName)) { if (e.key === 'Escape') { editor = null; render(); } return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -480,12 +459,11 @@
     const q = current(); if (!q) return;
     const k = e.key.length === 1 ? e.key.toUpperCase() : e.key;
     if (k === 'Enter') { if (pick.size === 1) answer({ kind: 'pick', letters: [...pick] }); e.preventDefault(); return; }
-    if (/^[A-Z]$/.test(k) && q.options.some((o) => o.letter === k)) { toggle(k); return; }   // a version's letter comes first
+    if (/^[A-Z]$/.test(k) && q.options.some((o) => o.letter === k)) { toggle(k); return; }
     if (k === 'S') { doSkip(); return; }
     if (k === 'M') { startMerge(); return; }
     if (k === 'W') { startOwn(); e.preventDefault(); return; }
   });
-
   if (API.onChanged) API.onChanged(() => load(true));
   if (API.syncStatus) API.syncStatus().then((r) => { if (r && r.ok) { sync = r.status; syncPv = r.preview; if (screen.name === 'home') soft(); } }).catch(() => {});
   if (API.onSync) API.onSync((st) => { const was = sync && sync.line; sync = st; if (screen.name === 'home' && st.line !== was) soft(); });

@@ -4,9 +4,7 @@
   else root.PhoneGitHub = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   const API = 'https://api.github.com';
-
   class GhError extends Error { constructor(kind, msg, status) { super(msg); this.kind = kind; this.status = status || 0; } }
-
   function utf8ToB64(s) {
     if (typeof Buffer !== 'undefined') return Buffer.from(s, 'utf8').toString('base64');
     const b = new TextEncoder().encode(s); let bin = '';
@@ -21,7 +19,6 @@
     return new TextDecoder('utf-8').decode(b);
   }
   const okRepo = (r) => /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(String(r || ''));
-
   function client(opts) {
     const f = opts.fetch, token = String(opts.token || '').trim(), repo = String(opts.repo || '').trim(), branch = opts.branch || 'main';
     if (!okRepo(repo)) throw new GhError('repo', 'The repository name should look like owner/name.');
@@ -62,6 +59,5 @@
       updateRef: async (sha) => { await req('PATCH', '/git/refs/heads/' + branch, { sha, force: false }); },
     };
   }
-
   return { client, GhError, okRepo, utf8ToB64, b64ToUtf8 };
 });

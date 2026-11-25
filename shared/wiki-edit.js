@@ -5,7 +5,6 @@
   const { M, el, status } = C;
   const $ = (id) => document.getElementById(id);
   const IC = (n, s) => (window.BladesIcon ? window.BladesIcon(n, s || 14) : '');
-
   let ws = null, live = false, nextId = 0;
   const waiting = new Map();
   const brain = { undo: 0, tied: false, trash: 0 };
@@ -35,7 +34,7 @@
       tools();
     };
     ws.onclose = () => { live = false; ws = null; tools(); for (const [id, w] of waiting) { clearTimeout(w.t); w.reject(new Error('Memphis stopped answering.')); waiting.delete(id); } setTimeout(connect, 2500); };
-    ws.onerror = () => { try { ws.close(); } catch (e) { /* closing */ } };
+    ws.onerror = () => { try { ws.close(); } catch (e) {   } };
   }
   function ask(action, payload, ms) {
     if (PHONE) {
@@ -51,7 +50,6 @@
       ws.send('savenote:' + b64(JSON.stringify(Object.assign({ action, id }, payload || {}))));
     });
   }
-
   const box = document.querySelector('#s-bottom .tools');
   function btn(id, cls, icon, label) {
     const b = el('button', 'bl-btn sm ' + cls); b.type = 'button'; b.id = id;
@@ -61,10 +59,10 @@
   const bEdit = btn('t-edit', 'gold', 'pen', 'Edit page');
   const bUndo = btn('t-undo', 'ghost', 'undo', 'Undo last save');
   const bTrash = btn('t-trash', 'coal', 'trash', 'Empty trash');
-  if (PHONE) { bPic.remove(); bTrash.remove(); }   // pictures and the vault trash stay on Alaric for now
-  let editing = null;   // { p, edits }
+  if (PHONE) { bPic.remove(); bTrash.remove(); }
+  let editing = null;
   const toolHooks = [];
-  let editor = null;    // v5 (wiki-pages.js): the editor for pages with parents
+  let editor = null;
   function tools() {
     const p = C.currentPage();
     const why = !live ? 'Memphis is not running' : brain.tied ? "Memphis's Hands are tied (Control Room)" : '';
@@ -74,13 +72,12 @@
     bPic.disabled = !onPage || !!why || !!editing;
     bPic.title = why || (onPage ? 'Place a picture frame on this page' : 'Open a page to add a picture');
     bUndo.hidden = !brain.undo; bUndo.disabled = !live || brain.tied || !!editing;
-    for (const f of toolHooks) { try { f(); } catch (e) { console.error(e); } }   // v5: New page, Rename everywhere
+    for (const f of toolHooks) { try { f(); } catch (e) { console.error(e); } }
     bUndo.lastChild.textContent = brain.undo > 1 ? 'Undo last save (' + brain.undo + ')' : 'Undo last save';
     bTrash.disabled = !live; bTrash.title = live ? 'See what is in the vault trash and empty it (asks first)' : 'Memphis is not running';
     bTrash.lastChild.textContent = brain.trash ? 'Empty trash (' + brain.trash + ')' : 'Empty trash';
   }
   window.__wikiAfterShow = () => { tools(); };
-
   bUndo.addEventListener('click', async () => {
     bUndo.disabled = true;
     try {
@@ -94,7 +91,6 @@
     try { const r = await ask('wiki_trash', null, 40000); status(r.ok ? 'The Sandbox shows what would go. Nothing is deleted until you approve it there.' : (r.error || 'It did not work.'), !r.ok); }
     catch (e) { status(e.message, true); }
   });
-
   const PARTS = [
     { tab: 'The page', parts: [['what', 'I  What it is'], ['story', 'II  Its story'], ['threads', 'III  Its threads']] },
     { tab: "Mentor's margin", parts: [['margin', "Mentor's margin (belief: his journal, in his hand)"]] },
@@ -147,7 +143,7 @@
         if (!r.ok) throw new Error(r.error || 'It was not saved.');
         editing = null; document.removeEventListener('keydown', keys, true);
         status('Saved. Undo last save puts it back.');
-        await C.load(false);   // the watcher would too; this shows it at once
+        await C.load(false);
         C.show(viewOf(p), { noHistory: true });
       } catch (err) { status(err.message, true); save.disabled = false; save.textContent = 'Save'; }
     }
@@ -163,7 +159,6 @@
     if (p.landing) return { kind: 'folder', id: p.folder };
     return { kind: 'page', id: p.name };
   }
-
   const menu = el('div', 'pic-menu'); menu.hidden = true; document.body.appendChild(menu);
   [['what', 'In the box, beside the title'], ['story', 'In the Story'], ['behind', 'Behind the scenes (inspiration or sketch)']].forEach(([k, lab]) => {
     const b = el('button', 'pm-item', lab); b.type = 'button'; b.addEventListener('click', () => { menu.hidden = true; placeFrame(k); }); menu.appendChild(b);
@@ -175,7 +170,6 @@
     $('s-bottom').classList.add('pin');
   });
   document.addEventListener('mousedown', (e) => { if (!menu.hidden && !menu.contains(e.target) && e.target !== bPic && !bPic.contains(e.target)) { menu.hidden = true; $('s-bottom').classList.remove('pin'); } });
-
   const MAX = 8 * 1024 * 1024;
   function placeFrame(where) {
     $('s-bottom').classList.remove('pin');
@@ -248,7 +242,6 @@
   function fileB64(file) {
     return file.arrayBuffer().then(buf => { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); });
   }
-
   const why = () => (!live ? 'Memphis is not running' : brain.tied ? "Memphis's Hands are tied (Control Room)" : '');
   window.__wikiEdit = { brain, fileName, clean, ask: (a, p, ms) => ask(a, p, ms),
     why, canWrite: () => !why(), editing: () => !!editing,

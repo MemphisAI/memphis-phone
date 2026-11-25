@@ -7,13 +7,12 @@
   const LKEY = 'memphis.wiki.layers', VKEY = 'memphis.wiki.view';
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* not kept: fine */ } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {   } },
   };
   const layers = Object.assign({ margin: true, behind: true, truth: true }, store.get(LKEY) || {});
   let W = null, relOf = new Map(), folderList = [], media = [];
   let view = store.get(VKEY) || { kind: 'index' };
   const back = [];
-
   function status(msg, bad) {
     const s = $('status'); s.textContent = msg || ''; s.classList.toggle('bad', !!bad); s.classList.toggle('on', !!msg);
     clearTimeout(status.t); if (msg) status.t = setTimeout(() => s.classList.remove('on'), 4200);
@@ -22,13 +21,12 @@
   function dot(suit) { const d = el('span', 'sd ' + suit); d.setAttribute('aria-hidden', 'true'); return d; }
   function folderOf(id) { return M.FOLDER_BY_ID[id] || { id, num: '', name: id, suit: 'bone' }; }
   function folderLabel(f) { return f.num ? f.num + ' ' + f.name : f.name; }
-
   async function load(keepScroll) {
     let r;
     try { r = await API.read(); } catch (e) { r = { ok: false, error: String(e && e.message || e) }; }
     if (!r || !r.ok) { page.innerHTML = ''; page.appendChild(el('p', 'err', 'The wiki could not read the notes: ' + ((r && r.error) || 'no answer'))); return; }
     W = M.build(r.files); media = r.media || [];
-    if (window.__wikiSets) { try { window.__wikiSets.data(r.files, r.homes || {}); } catch (e) { console.error(e); } }   // step 5
+    if (window.__wikiSets) { try { window.__wikiSets.data(r.files, r.homes || {}); } catch (e) { console.error(e); } }
     relOf = new Map(r.files.map(f => [String(f.rel).split('/').pop().replace(/\.md$/i, ''), f.rel]));
     const have = new Set(r.folders || []);
     folderList = M.FOLDERS.filter(f => have.has(f.id) || f.id === '00 Index');
@@ -38,12 +36,11 @@
     show(view, { noHistory: true, quiet: true });
     if (keepScroll) page.scrollTop = y;
   }
-
   function go(v) { if (window.__wikiGraph && window.__wikiGraph.on()) { window.__wikiGraph.set(false); } show(v); buildRight(); }
   function show(v, o) {
     o = o || {};
     if (!W) return;
-    if (window.__wikiLeave && !window.__wikiLeave()) return;   // step 4: unsaved edits ask first
+    if (window.__wikiLeave && !window.__wikiLeave()) return;
     if (v.kind === 'page' && !W.pages.has(v.id)) {
       if (!o.quiet) status('No page by that name.', true);
       v = { kind: 'index' };
@@ -55,7 +52,7 @@
     view = v; store.set(VKEY, v);
     if (hits.length) { hits = []; drawHits(); }
     page.innerHTML = '';
-    if (v.kind === 'set' || v.kind === 'member') window.__wikiSets.render(v, page);   // step 5: numbered sets, drawn live
+    if (v.kind === 'set' || v.kind === 'member') window.__wikiSets.render(v, page);
     else if (v.kind === 'folder') renderFolder(v.id);
     else if (v.kind === 'media') renderMedia(v.id === 'sketch' ? 'sketch' : 'all');
     else if (v.kind === 'page') renderPage(W.pages.get(v.id));
@@ -75,7 +72,7 @@
       const fr = f.querySelector('.pic-frame'); if (!fr) return;
       fr.innerHTML = '';
       if (url) { const im = document.createElement('img'); im.src = url; im.alt = f.querySelector('figcaption') ? f.querySelector('figcaption').textContent : ''; fr.appendChild(im); }
-      else fr.appendChild(el('span', 'pic-empty', (API.phone ? 'Pictures stay on Alaric for now: ' : 'Missing from Media: ') + n));   // phone step 4
+      else fr.appendChild(el('span', 'pic-empty', (API.phone ? 'Pictures stay on Alaric for now: ' : 'Missing from Media: ') + n));
     });
   }
   function goBack() { const b = back.pop(); if (!b) return; show(b.view, { noHistory: true }); page.scrollTop = b.y || 0; }
@@ -88,19 +85,17 @@
     const a = e.target.closest('a.wl, [data-go]');
     if (!a) return;
     e.preventDefault();
-    if (a.dataset.go) { const g = a.dataset.go, i = g.indexOf('|'); go({ kind: g.slice(0, i), id: g.slice(i + 1) }); return; }   // step 5: an id may hold '|'
+    if (a.dataset.go) { const g = a.dataset.go, i = g.indexOf('|'); go({ kind: g.slice(0, i), id: g.slice(i + 1) }); return; }
     const kind = a.dataset.kind, t = a.dataset.target;
     if (kind === 'page') go({ kind: 'page', id: t });
     else if (kind === 'home') openVault(relOf.get(t));
     else status('No page called ' + M.plainName(t) + ' yet.');
   });
-
   async function openVault(rel) {
     if (!rel) { status('Nothing to open here.'); return; }
     const r = await API.openInVault(rel);
     if (!r || !r.ok) status('Could not open it: ' + ((r && r.error) || 'no answer'), true);
   }
-
   function buildLeft() {
     const s = $('s-left'); s.innerHTML = '';
     const brand = el('div', 'brand'); brand.innerHTML = window.BladesCoin ? window.BladesCoin('wiki', 28) : '';
@@ -123,7 +118,6 @@
     const cur = view.kind === 'index' ? '00 Index' : view.kind === 'folder' ? view.id : view.kind === 'set' || view.kind === 'member' ? 'set:' + String(view.id).split('|')[0] : (W.pages.get(view.id) || {}).folder;
     document.querySelectorAll('#s-left .fo').forEach(b => b.classList.toggle('on', b.dataset.id === cur));
   }
-
   function buildRight() {
     const s = $('s-right'); s.innerHTML = '';
     s.appendChild(el('div', 'rh', 'View'));
@@ -167,7 +161,6 @@
     }
     if (window.__wikiRightBottom) { try { window.__wikiRightBottom(s); } catch (e) { console.error(e); } }
   }
-
   const find = $('find'), list = $('find-list');
   let hits = [], hi = 0;
   function drawHits() {
@@ -198,19 +191,18 @@
     if (view.kind === 'page') return (W.pages.get(view.id) || {}).rel;
     if (view.kind === 'folder') { const l = W.landings.get(view.id); return l ? l.rel : null; }
     if ((view.kind === 'set' || view.kind === 'member') && window.__wikiSets) return window.__wikiSets.homeRel(view);
-    if (view.kind === 'media') return null;   // v6: Media is drawn live, it has no note
+    if (view.kind === 'media') return null;
     return W.index ? W.index.rel : null;
   }
   function currentPage() {
     if (!W) return null;
     if (view.kind === 'page') return W.pages.get(view.id) || null;
     if (view.kind === 'folder') return W.landings.get(view.id) || null;
-    if (view.kind === 'set' || view.kind === 'member') return null;   // step 5: a set is edited in its own app
+    if (view.kind === 'set' || view.kind === 'member') return null;
     if (view.kind === 'media') return null;
     return W.index || null;
   }
   function updateTools() { const r = currentRel(); $('t-vault').disabled = !r; $('t-vault').title = r ? 'Open this note in Obsidian' : 'This folder has no landing note yet'; }
-
   function crumbs(parts) {
     const c = el('div', 'crumbs');
     parts.forEach((p, i) => {
@@ -238,7 +230,6 @@
     m.appendChild(body);
     return m;
   }
-
   const SUIT_WORDS = {
     magia: ['Magia', 'Rules that are omniversal.'],
     domina: ['Domina', 'The results of recursive complexity, either organically, mechanically or culturally.'],
@@ -316,7 +307,6 @@
     if (p) pageBody(art, p, { skipWhat: true, noBox: true, noLead: true });
     page.appendChild(art);
   }
-
   function renderFolder(id) {
     const f = folderOf(id), l = W.landings.get(id);
     const art = el('article', 'pg landing suit-' + f.suit);
@@ -435,7 +425,6 @@
     sec.appendChild(ul);
     return sec;
   }
-
   function renderPage(p) {
     const f = folderOf(p.folder);
     const art = el('article', 'pg suit-' + p.suit + (layers.margin && p.margin.trim() ? ' has-margin' : ''));
@@ -519,7 +508,7 @@
     if (p.noRecord) main.appendChild(el('p', 'norecord', 'The Concordate holds no record.'));
     lead.forEach(d => { if (d.textContent.trim() || d.querySelector('figure,table')) main.appendChild(d); });
     for (const s of p.secs) {
-      if (s.kind === 'members') continue;   // drawn live below, with its minor members
+      if (s.kind === 'members') continue;
       if (s.kind === 'bonds' || s.kind === 'ties') {
         const bonds = M.parseBonds(s.text); if (!bonds.length) continue;
         const sec = el('section', 'sec bonds' + (s.kind === 'ties' ? ' ties' : '')); sec.dataset.part = s.kind === 'ties' ? 'Ties' : 'Bonds'; sec.appendChild(el('h2', '', s.head));
@@ -527,7 +516,7 @@
         for (const b of bonds) { const c = chip(b); if (b.word) c.appendChild(el('span', 'bw', b.word)); cs.appendChild(c); }
         sec.appendChild(cs); main.appendChild(sec); continue;
       }
-      if (!s.text.trim()) continue;   // an empty section is hidden
+      if (!s.text.trim()) continue;
       const sec = el('section', 'sec story'); sec.dataset.part = s.kind === 'story' ? 'story' : s.head;
       const h = el('h2');
       if (/^ii\s/i.test(s.head)) h.append(el('span', 'rn', 'II'), document.createTextNode('Its story')); else h.textContent = s.head;
@@ -567,7 +556,7 @@
     if (layers.behind && p.behind.parts.length) {
       const d = el('details', 'behind'); d.dataset.part = 'behind';
       const open = store.get('memphis.wiki.behindOpen');
-      if (open || p.noRecord) d.open = true;   // v6: a page with no record opens on what is behind it
+      if (open || p.noRecord) d.open = true;
       const sm = el('summary'); sm.appendChild(el('span', '', 'Behind the scenes'));
       if (p.behind.open.length && layers.truth) { const q = el('span', 'mk-open small', '?'); q.title = p.behind.open.length + ' open'; sm.appendChild(q); sm.appendChild(el('span', 'nopen', p.behind.open.length + ' open')); }
       d.appendChild(sm);
@@ -634,11 +623,10 @@
     const cs = el('div', 'chips'); list.sort((a, b) => a.title.localeCompare(b.title)).forEach(q => cs.appendChild(chip({ target: q.name, label: q.title }))); s.appendChild(cs);
     return s;
   }
-
   if (!M || !API) { page.textContent = 'The wiki could not start (its bridge is missing).'; return; }
   API.onChanged(() => load(true));
   load(false);
-  window.__wiki = { show, state: () => ({ view, layers, pages: W ? W.pages.size : 0 }) };   // for the checks
+  window.__wiki = { show, state: () => ({ view, layers, pages: W ? W.pages.size : 0 }) };
   window.__wikiCore = { M, API, el, status, load, show, goBack, layers, page,
     get W() { return W; }, get view() { return view; }, get media() { return media; }, currentPage, folderOf, buildRight, go, dot, crumbs, md, openVault, hydratePictures, chip, pchip, kindGroup };
 })();

@@ -21,9 +21,7 @@
   left.addEventListener('click', (e) => { if (e.target.closest('button, a')) setTimeout(() => set(null), 0); });
   right.addEventListener('click', (e) => { if (e.target.closest('[data-go], a')) setTimeout(() => set(null), 0); });
   C.page.addEventListener('click', () => { if (open) set(null); });
-
   $('b-back').addEventListener('click', () => { set(null); C.goBack(); });
-
   document.addEventListener('focusin', (e) => {
     const t = e.target;
     if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.id !== 'find'))) setTimeout(() => t.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);

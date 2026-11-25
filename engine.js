@@ -4,21 +4,18 @@
   else root.PhoneEngine = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   const TEXT = /\.(md|json|txt)$/i;
-
   function create(opts) {
     const store = opts.store, SM = opts.SyncModel, GH = opts.PhoneGitHub, fetchFn = opts.fetch;
     const now = opts.now || (() => Date.now());
     const iso = () => new Date(now()).toISOString();
     let busy = null, listeners = [];
-    const tell = (ev) => { for (const f of listeners) { try { f(ev); } catch (e) { /* ignore */ } } };
-
+    const tell = (ev) => { for (const f of listeners) { try { f(ev); } catch (e) {   } } };
     async function gh() {
       const token = await store.get('meta', 'token'), repo = await store.get('meta', 'repo');
       if (!token || !repo) throw new GH.GhError('key', 'Not signed in.');
       return GH.client({ fetch: fetchFn, token, repo });
     }
     const keep = (p) => SM.synced(p) && TEXT.test(p);
-
     async function signIn(repo, token) {
       const c = GH.client({ fetch: fetchFn, token, repo });
       await c.head();
@@ -30,7 +27,6 @@
     }
     async function signedIn() { return !!(await store.get('meta', 'token')) && !!(await store.get('meta', 'repo')); }
     async function forgetKey() { await store.del('meta', 'token'); }
-
     async function read(p) {
       const o = await store.get('outbox', p); if (o) return o.text;
       const f = await store.get('files', p); return f ? f.text : null;
@@ -57,7 +53,6 @@
       return true;
     }
     const local = { get: (k) => store.get('meta', 'app:' + k), put: (k, v) => store.put('meta', 'app:' + k, v) };
-
     async function pull(c) {
       const head = await c.head();
       if (head === (await store.get('meta', 'head'))) return { pulled: 0, head };
@@ -81,6 +76,8 @@
       for (const o of await store.all('outbox')) {
         const rsha = remote.get(o.path) || null;
         if (rsha === o.base) continue;
+        const now = rsha ? await store.get('files', o.path) : null;
+        if (now && now.text === o.text) { await store.del('outbox', o.path); continue; }
         if (o.path === SM.DECISIONS && rsha) {
           const theirs = (await store.get('files', o.path)).text;
           const m = SM.mergeDecisions(o.baseText ? JSON.parse(o.baseText) : {}, JSON.parse(o.text), JSON.parse(theirs)).state;
@@ -90,7 +87,6 @@
       await store.put('meta', 'head', head); await store.put('meta', 'tree', cm.tree);
       return { pulled: todo.length, removed, head };
     }
-
     async function push(c) {
       const out = await store.all('outbox');
       if (!out.length) return { pushed: 0, copies: [] };
@@ -113,7 +109,6 @@
       await store.put('meta', 'head', nc); await store.put('meta', 'tree', nt);
       return { pushed: plan.length, copies };
     }
-
     function sync() {
       if (busy) return busy;
       busy = (async () => {
@@ -123,7 +118,7 @@
           const c = await gh();
           let p = await pull(c), u;
           try { u = await push(c); }
-          catch (e) { if (e.kind !== 'race') throw e; p = await pull(c); u = await push(c); }   // GitHub moved on: take it in, send again
+          catch (e) { if (e.kind !== 'race') throw e; p = await pull(c); u = await push(c); }
           res = { ok: true, pulled: p.pulled, pushed: u.pushed, copies: u.copies };
           await store.put('meta', 'lastOk', iso()); await store.del('meta', 'lastError');
         } catch (e) {
@@ -137,7 +132,6 @@
       })();
       return busy;
     }
-
     async function status() {
       return { signedIn: await signedIn(), repo: await store.get('meta', 'repo'), pending: await pending(),
         files: (await store.keys('files')).length, lastOk: await store.get('meta', 'lastOk'), lastError: await store.get('meta', 'lastError'), running: !!busy };
@@ -148,9 +142,7 @@
       return out.map((o) => '=== ' + o.path + ' (changed on the phone ' + o.at.slice(0, 16).replace('T', ' ') + ') ===\n' + o.text).join('\n\n');
     }
     const on = (f) => { listeners.push(f); return () => { listeners = listeners.filter((x) => x !== f); }; };
-
     return { signIn, signedIn, forgetKey, read, write, list, pending, discard, local, sync, status, exportText, on };
   }
-
   return { create, TEXT };
 });

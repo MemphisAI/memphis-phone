@@ -12,11 +12,10 @@
     { path: WORKBENCH, label: 'The Canon Workbench' },
     { path: CANON_DIR, label: 'Your Canon answers' },
   ];
-  const MAX_FILE = 90 * 1024 * 1024;   // GitHub refuses a file over 100 MB
+  const MAX_FILE = 90 * 1024 * 1024;
   const BEGIN = '# --- book sync (Memphis, phone brief step 1) ---', END = '# --- end of book sync ---';
   const BLOCK = [BEGIN, '!/Evrynthing/', '!/' + WORKBENCH + '/', '!/' + CANON_DIR + '/',
     '/' + CANON_DIR + '/*.prev.json', '/' + CANON_DIR + '/*.tmp', '**/.snapshots/', END];
-
   function gitignoreWith(text) {
     const t = String(text || '').replace(/\r\n/g, '\n');
     const i = t.indexOf(BEGIN), j = t.indexOf(END);
@@ -26,7 +25,6 @@
     return base + '\n' + BLOCK.join('\n') + '\n';
   }
   const hasBlock = (text) => String(text || '').indexOf(BEGIN) >= 0;
-
   function copyName(rel, exists) {
     const m = /^(.*?)(\.[^./]+)?$/.exec(rel);
     const stem = m[1], ext = m[2] || '';
@@ -38,7 +36,6 @@
   }
   const isCopy = (rel) => /\.from-phone(-\d+)?(\.[^./]+)?$/.test(rel);
   const synced = (rel) => PATHS.some((p) => rel === p.path || rel.indexOf(p.path + '/') === 0);
-
   const MAPS = ['decisions', 'skipped', 'imported', 'suggest', 'checked'];
   function stamp(v) {
     if (typeof v === 'number') return v;
@@ -56,9 +53,9 @@
         const bs = JSON.stringify(bm[key]), os = JSON.stringify(om[key]), ts = JSON.stringify(tm[key]);
         let pick;
         if (os === ts) pick = om[key];
-        else if (os === bs) pick = tm[key];          // only the other side changed it
-        else if (ts === bs) pick = om[key];          // only Alaric changed it
-        else {                                       // both: the later answer wins, and it is noted
+        else if (os === bs) pick = tm[key];
+        else if (ts === bs) pick = om[key];
+        else {
           pick = stamp(tm[key]) > stamp(om[key]) ? tm[key] : om[key];
           if (k === 'decisions') clashes.push(key);
         }
@@ -69,7 +66,6 @@
     for (const key of Object.keys(out.decisions)) { delete out.skipped[key]; if (out.suggest[key] && !out.suggest[key].dismissed) delete out.suggest[key]; }
     return { state: out, clashes };
   }
-
   function statusLine(st, now) {
     if (!st || !st.enabled) return 'Book sync is off.';
     if (st.running) return 'Syncing with GitHub...';
@@ -84,6 +80,5 @@
     if (s < 86400) return Math.round(s / 3600) + ' h ago';
     return Math.round(s / 86400) + ' days ago';
   }
-
   return { WORKBENCH, CANON_DIR, DECISIONS, PATHS, MAX_FILE, BLOCK, gitignoreWith, hasBlock, copyName, isCopy, synced, mergeDecisions, statusLine, stamp };
 });

@@ -12,7 +12,6 @@
   const norm = (t) => String(t == null ? '' : t).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const bytes = (t) => new TextEncoder().encode(t).length;
   const stem = (p) => p.split('/').pop().replace(/\.md$/i, '');
-
   async function read() {
     if (!(await E.signedIn())) { location.href = 'index.html'; return { ok: false, error: 'Not signed in.' }; }
     const files = [], folders = new Set();
@@ -31,7 +30,6 @@
     const dalinari = await E.read(BASE + '/Dalinari/Dalinari.json');
     return { ok: true, files, folders: [...folders], media: [], homes: { 'Dalinari/Dalinari.json': dalinari } };
   }
-
   function pageRel(rel) {
     let r = String(rel || '').replace(/\\/g, '/').trim().replace(/^\/+/, '');
     if (r.indexOf(BASE + '/') !== 0) r = BASE + '/' + r;
@@ -57,7 +55,6 @@
   }
   async function stack() { const s = await E.local.get(UNDO); return Array.isArray(s) ? s : []; }
   async function push(entry) { const s = await stack(); s.push(entry); while (s.length > STACK_MAX) s.shift(); await E.local.put(UNDO, s); return s.length; }
-
   async function save(o) {
     if (o.picture) throw new Error('Pictures are added on Alaric for now.');
     const rel = pageRel(o.rel);
@@ -73,7 +70,6 @@
     const undo = await push({ at: new Date().toISOString(), page: rel, label: String(o.label || '').slice(0, 120), ops: [{ op: 'rewrite', path: rel, before: raw, after: neu }] });
     return { ok: true, rel, unchanged: false, undo };
   }
-
   async function saveSet(o) {
     const files = o.files;
     if (!Array.isArray(files) || !files.length) throw new Error('Refused: nothing to save.');
@@ -100,11 +96,10 @@
       }
     }
     if (!plan.length) return { ok: true, rels: [], unchanged: true, undo: (await stack()).length };
-    for (const x of plan) await E.write(x.path, x.after);   // the phone's own storage: all of it lands, or the error says which
+    for (const x of plan) await E.write(x.path, x.after);
     const undo = await push({ at: new Date().toISOString(), page: o.page ? pageRel(o.page) : plan[0].path, label: String(o.label || '').slice(0, 120), ops: plan });
     return { ok: true, rels: plan.map((x) => x.path), created: plan.filter((x) => x.op === 'create').length, rewritten: plan.filter((x) => x.op === 'rewrite').length, undo };
   }
-
   async function undo() {
     const s = await stack();
     const top = s.pop();
@@ -122,7 +117,6 @@
     await E.local.put(UNDO, s);
     return { ok: !left.length, undone, left, page: top.page, undo: s.length };
   }
-
   async function ask(o) {
     o = o || {};
     const id = String(o.id || ''), action = String(o.action || '');
@@ -137,7 +131,6 @@
       return reply({ ok: false, error: 'Unknown wiki request.' });
     } catch (e) { return reply({ ok: false, error: String(e && e.message || e) }); }
   }
-
   async function openInVault(rel) {
     const p = BASE + '/' + String(rel || '').replace(/\\/g, '/');
     const text = /\.md$/i.test(p) ? await E.read(p) : null;
@@ -151,6 +144,7 @@
     return { ok: true, via: 'phone' };
   }
   async function openApp(id) {
+    if (id === 'writer') { location.href = 'writer.html'; return { ok: true }; }
     P.toast((id === 'atelier' ? 'The Atelier' : 'The Writer') + ' comes to the phone in a later step. Open it on Alaric for now.', 4500);
     return { ok: true };
   }
@@ -159,10 +153,9 @@
     document.addEventListener('phone-synced', f);
     return () => document.removeEventListener('phone-synced', f);
   }
-
   window.wikiAPI = {
     phone: true, read, ask, openInVault, openApp, onChanged,
-    media: async () => ({ ok: false }),   // pictures are not on the phone yet
+    media: async () => ({ ok: false }),
     art: async () => ({ ok: false }),
     graph: () => Promise.resolve({ ok: true }),
     _pageRel: pageRel, _lists: { WIKI_FOLDERS, SKIP_DIRS, SHELF },

@@ -1,7 +1,3 @@
-/* Blades icon kit — usage: BladesIcon('plus', 20) returns an inline <svg> in currentColor. */
-/* Blades icon kit. Every stroke is a blade: it swells in the middle and tapers to points,
-   like the pieces of the mark. Where two strokes cross, the one on top cuts a gap in the one
-   beneath (the mark's over/under). Drawn on a 24-unit grid, single colour (currentColor). */
 const P2=(x,y)=>({x,y});
 function cubic(a,b,c,d,n){ const o=[]; n=n||24; for(let i=0;i<=n;i++){ const t=i/n, u=1-t;
   o.push(P2(u*u*u*a[0]+3*u*u*t*b[0]+3*u*t*t*c[0]+t*t*t*d[0], u*u*u*a[1]+3*u*u*t*b[1]+3*u*t*t*c[1]+t*t*t*d[1])); } return o; }
@@ -16,7 +12,6 @@ function round(pts,r){ const o=[P2(pts[0][0],pts[0][1])];
   const out=[o[0]]; for(let i=1;i<o.length;i++){ const a=o[i-1], b=o[i], L=Math.hypot(b.x-a.x,b.y-a.y), n=Math.max(1,Math.ceil(L/0.6)); for(let k=1;k<=n;k++) out.push(P2(a.x+(b.x-a.x)*k/n, a.y+(b.y-a.y)*k/n)); }
   return out; }
 const join=(...segs)=>segs.reduce((a,s)=>a.concat(a.length?s.slice(1):s),[]);
-/* blade outline. taper: 'both' | 'start' | 'end' | 'none'; W = max width; min = point width */
 function blade(pts,o){ o=Object.assign({W:2.3,taper:'both',min:0.28,pow:0.55},o);
   const L=[0]; for(let i=1;i<pts.length;i++) L.push(L[i-1]+Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y)); const T=L[L.length-1]||1;
   const wf=s=>{ let k; if(o.taper==='both') k=Math.pow(Math.sin(Math.PI*s),o.pow); else if(o.taper==='start') k=Math.pow(Math.sin(Math.PI*s/2),o.pow); else if(o.taper==='end') k=Math.pow(Math.cos(Math.PI*s/2),o.pow); else k=1; return o.W*(o.min/o.W+(1-o.min/o.W)*k)/2; };
@@ -73,10 +68,10 @@ I.menu     =[B(line([4,6.5],[20,6.5])), B(line([4,12],[20,12])), B(line([4,17.5]
 I.window   =[B(round([[4,5],[20,5],[20,19],[4,19],[4,5]],3),{taper:'both',W:2}), B(line([4,9],[20,9]),{W:1.5})];
 I.cards    =[B(round([[8.4,2.7],[2.2,4.4],[5.6,17.0],[11.8,15.3],[8.4,2.7]],2.2),{taper:'both',W:2}),
              B(round([[15,6],[10,6],[10,21],[20,21],[20,6],[15,6]],2.6),{taper:'both',W:2.1,over:true})];
-I.mark     =[]; // placeholder: the Blades mark itself is a file (branding/blades-mono.svg)
+I.mark     =[];
 I['tool-strategist']=[B(arc(12,12,6.6,-50,230),{W:1.8}), B(line([12,2],[12,22]),{W:2.9}), B(line([4,12],[20,12]),{W:2.5,over:true})];
 I['tool-butler']   =[B(arc(12,15.5,7.5,180,360,40),{W:2.3,taper:'none'}), B(line([3,18.5],[21,18.5]),{W:2.3}), {dot:[12,6.3,1.7]}];
-I['tool-insight']  =[B(round([[2.5,13],[7,13],[9.5,5.5],[13,19.5],[15.5,10.5],[17,13],[21.5,13]],1),{W:2.9})];   // W 2.9: at 2.5 it looked light beside the others at 28 px (brief: raise it if so)
+I['tool-insight']  =[B(round([[2.5,13],[7,13],[9.5,5.5],[13,19.5],[15.5,10.5],[17,13],[21.5,13]],1),{W:2.9})];
 const _pal=join(cubic([13,3.2],[6.5,3],[2.6,7.5],[2.8,12.6]), cubic([2.8,12.6],[3,18.2],[7.5,21.2],[12.6,20.8]),
   cubic([12.6,20.8],[16.5,20.5],[15.5,16.8],[17.6,15.4]), cubic([17.6,15.4],[20.8,13.8],[21.5,9.2],[19.2,6.4]),
   cubic([19.2,6.4],[17.6,4.4],[15.5,3.3],[13,3.2]));
@@ -85,7 +80,6 @@ I['tool-wiki']     =[B(join(arc(12,12,3.6,-90,270,36)),{taper:'both',W:2.2}), B(
 I['tool-canon']    =[B(line([6.8,19.6],[6.8,12.6]),{W:2.2,taper:'end'}), B(line([17.2,19.6],[17.2,12.6]),{W:2.2,taper:'end'}),
                      B(line([12,20],[12,8]),{W:2.8,taper:'end'}), {dot:[12,4.4,2.1]}, B(line([3.6,21.4],[20.4,21.4]),{W:1.7})];
 I['tool-atelier']  =[B(_pal,{W:2.1,taper:'none'}), {dot:[7.8,8.6,1.6]}, {dot:[12.2,7.2,1.6]}, {dot:[7.2,13.6,1.6]}, B(line([22,2],[11,15.5]),{W:2.8,taper:'start',over:true})];
-
 let _uid=0;
 function svg(name,size,extra){
   const strokes=I[name]; if(!strokes) return '';

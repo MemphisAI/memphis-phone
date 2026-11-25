@@ -51,9 +51,7 @@
   const FOLDER_BY_ID = Object.fromEntries(FOLDERS.map(f => [f.id, f]));
   const SUITS = ['domina', 'aura', 'magia', 'bone', 'behind'];
   const PREFIX = 'eV - ';
-
   function plainName(name) { return String(name || '').startsWith(PREFIX) ? String(name).slice(PREFIX.length) : String(name || ''); }
-
   function parseFrontmatter(text) {
     const s = String(text || '').replace(/^﻿/, '');
     if (!s.startsWith('---')) return { fm: {}, body: s };
@@ -65,7 +63,7 @@
     const fm = {};
     let lastKey = null;
     for (const line of head) {
-      const li = line.match(/^\s+-\s+(.*)$/);   // a YAML block list under the last key
+      const li = line.match(/^\s+-\s+(.*)$/);
       if (li && lastKey && (fm[lastKey] === '' || Array.isArray(fm[lastKey]))) {
         if (!Array.isArray(fm[lastKey])) fm[lastKey] = [];
         fm[lastKey].push(li[1].trim().replace(/^['"]|['"]$/g, ''));
@@ -75,21 +73,19 @@
       if (!m) continue;
       lastKey = m[1].toLowerCase();
       let v = m[2].trim();
-      if (/^\[\[[^\]]*\]\]$/.test(v)) { /* one bare [[link]]: a string */ }
+      if (/^\[\[[^\]]*\]\]$/.test(v)) {   }
       else if (/^\[.*\]$/.test(v)) v = v.slice(1, -1).split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
       else v = v.replace(/^['"]|['"]$/g, '');
       fm[m[1].toLowerCase()] = v;
     }
     return { fm, body };
   }
-
   const LINK_RE = /\[\[([^\]|#]+)(?:#([^\]|]*))?(?:\|([^\]]*))?\]\]/g;
   function links(text) {
     const out = []; let m; LINK_RE.lastIndex = 0;
     while ((m = LINK_RE.exec(String(text || '')))) out.push({ target: m[1].trim(), heading: (m[2] || '').trim(), label: (m[3] || '').trim() || plainName(m[1].trim()) });
     return out;
   }
-
   function kindOf(h) {
     const t = h.trim().toLowerCase();
     if (/^i\s+what it is/.test(t)) return 'what';
@@ -97,10 +93,10 @@
     if (/^iii\s+its threads/.test(t)) return 'threads';
     if (/^mentor'?s margin/.test(t) || /^mentor’s margin/.test(t)) return 'margin';
     if (/^behind the scenes/.test(t)) return 'behind';
-    if (t === 'facts') return 'facts';           // v5: the facts box
-    if (t === 'bonds') return 'bonds';           // v5: a link plus one word
-    if (t === 'ties') return 'ties';             // v6: the unities a page's Filiai binds it to (a link plus one word)
-    if (t === 'members' || t === 'holds') return 'members';   // v5: minor members as plain lines
+    if (t === 'facts') return 'facts';
+    if (t === 'bonds') return 'bonds';
+    if (t === 'ties') return 'ties';
+    if (t === 'members' || t === 'holds') return 'members';
     return 'other';
   }
   function parentList(v) {
@@ -226,7 +222,6 @@
     if (p.line.trim() || p.what.trim() || p.facts.some(f => f.value) || p.bonds.length || p.ties.length || p.minor.length) return true;
     return p.secs.some(s => s.kind !== 'members' && s.text.replace(/^\s*[-*]\s*$/gm, '').trim());
   }
-
   function folderOfRel(rel) {
     const parts = String(rel).split('/');
     return parts.length > 1 && FOLDER_BY_ID[parts[0]] ? parts[0] : '';
@@ -238,10 +233,10 @@
       if (!/\.md$/i.test(rel)) continue;
       const base = rel.split('/').pop().replace(/\.md$/i, '');
       const folder = folderOfRel(rel);
-      if (!folder) { others.add(base); continue; }   // Timeline, Structure, Infinity Parables: live homes, not wiki pages
+      if (!folder) { others.add(base); continue; }
       const p = parseNote(f.text, base);
       p.rel = rel; p.folder = folder; p.mtimeMs = f.mtimeMs || 0; p.raw = String(f.text || '');
-      if (rel.startsWith(SHELF_DIR + '/')) p.onShelf = true;   // the shelf: a page per section and fact line
+      if (rel.startsWith(SHELF_DIR + '/')) p.onShelf = true;
       const fo = FOLDER_BY_ID[folder];
       p.suit = fo.suit;
       if (base === PREFIX + fo.name && folder !== '00 Index') { landings.set(folder, p); p.landing = true; }
@@ -302,7 +297,7 @@
     seen = seen || new Set();
     if (seen.has(p.name)) return null;
     seen.add(p.name);
-    if (p.topSet && seen.size === 1) return p.topSet;   // v6: sorted by hand wins, for this page only
+    if (p.topSet && seen.size === 1) return p.topSet;
     const first = p.parents.what[0];
     if (first) {
       if (first.top) return first.top;
@@ -416,7 +411,7 @@
     for (const m of p.members) {
       if (seen.has(m.name + m.rel)) continue; seen.add(m.name + m.rel);
       const q = w.pages.get(m.name); if (!q) continue;
-      if (q.noRecord && m.rel !== 'book') continue;   // 22 Nov evening: a page the Concordate holds no record of is not listed in-world
+      if (q.noRecord && m.rel !== 'book') continue;
       (m.rel === 'book' ? book : inWorld).push(q);
     }
     const uniq = (l) => [...new Map(l.map(q => [q.name, q])).values()].sort((a, b) => a.title.localeCompare(b.title));
@@ -459,7 +454,6 @@
     hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
     return hits.slice(0, max || 8);
   }
-
   const BUILTIN_FORMS = { Story: 'text', Bonds: 'links', Ties: 'links', Members: 'list', Holds: 'list', Who: 'links' };
   function shelfName(p) {
     const n = plainName(p.name);
@@ -572,8 +566,6 @@
     }
     return BACK[k] || k;
   }
-
-
   const ORDER = ['what', 'story', 'threads', 'margin', 'behind'];
   const HEADS = { what: 'I What it is', story: 'II Its story', threads: 'III Its threads', margin: "Mentor's margin", behind: 'Behind the scenes' };
   function sections(text) {
@@ -651,7 +643,6 @@
     const cur = bodyOf(text, k);
     return compose(text, { [k]: (cur ? cur.replace(/\s+$/, '') + '\n\n' : '') + block });
   }
-
   function assemble(sp) {
     let out = sp.head.replace(/\n+$/, '');
     for (const s of sp.secs) out += '\n\n' + s.heading + (s.body ? '\n' + s.body : '');
@@ -669,7 +660,7 @@
     const end = src.indexOf('\n---', 3);
     const head = src.slice(4, end).split('\n'), rest = src.slice(end);
     let i = head.findIndex(l => new RegExp('^' + key + '\\s*:').test(l));
-    if (i >= 0) {   // a block list under the key goes too
+    if (i >= 0) {
       let j = i + 1; while (j < head.length && /^\s+-\s/.test(head[j])) j++;
       head.splice(i, j - i, ...(line ? [line] : []));
     } else if (line) head.push(line);
@@ -688,7 +679,7 @@
     const t = lines.findIndex(l => /^#\s+/.test(l));
     const keep = t >= 0 ? lines.slice(0, t + 1) : lines;
     const v = String(line == null ? '' : line).replace(/\r?\n+/g, ' ').trim();
-    const pics = splitPics(lines.slice(t >= 0 ? t + 1 : lines.length).join('\n')).pics;   // the lead's pictures stay
+    const pics = splitPics(lines.slice(t >= 0 ? t + 1 : lines.length).join('\n')).pics;
     sp.head = keep.join('\n') + (v ? '\n\n' + v : '') + (pics ? '\n\n' + pics : '');
     return assemble(sp);
   }
@@ -745,7 +736,7 @@
   function topFolder(top, aspect) {
     const t = TOP_BY_NAME[String(top || '').toLowerCase()];
     if (!t) return 'Behind the scenes';
-    return t.folder;   // v6: Aura is one folder; the aspects are parent pages, not folders
+    return t.folder;
   }
   function stamp(d) { d = d || new Date(); const z = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); }
   function cleanTitle(s) { return String(s || '').replace(/[\\/:*?"<>|\[\]#^\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/^\.+|\.+$/g, '').slice(0, 80).trim(); }
@@ -762,7 +753,7 @@
       for (const s of o.sections || []) t += '\n## ' + s + '\n';
     }
     if (o.top && TOP_BY_NAME[String(o.top).toLowerCase()] && o.topSet) t = setFmRaw(t, 'top', TOP_BY_NAME[String(o.top).toLowerCase()].name);
-    if (o.history) t += '\n## Behind the scenes\n### History\n- ' + o.history + '\n';   // v6: no bookkeeping lines by default
+    if (o.history) t += '\n## Behind the scenes\n### History\n- ' + o.history + '\n';
     return t;
   }
   function shelfPageText(o) {
@@ -776,7 +767,6 @@
       (o.history ? '\n## Behind the scenes\n### History\n- ' + o.history + '\n' : '');
   }
   function shelfRel(kind, name) { return SHELF_DIR + '/' + PREFIX + (kind === 'fact' ? 'Fact - ' : 'Section - ') + cleanTitle(name) + '.md'; }
-
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   const CANON_RE = /\s\^canon-[0-9a-f]{6}\s*$/;
   const CANON_MARK = '<span class="mk-canon" title="Made canon in Canon">Canon</span>';
@@ -880,7 +870,6 @@
     flushPara(); flushList(); flushQuote(); flushTable();
     return html;
   }
-
   const api = { ORDER, HEADS, sections, bodyOf, compose, setFrontmatter, pictureBlock, addPicture, FOLDERS, FOLDER_BY_ID, SUITS, PREFIX, plainName, parseFrontmatter, parseNote, links, build, resolve, landing, counts, find, render, esc, depthOf,
     TOPS, TOP_BY_NAME, FOLDER_TOP, kindChain, TYPE_OF_FOLDER, SHELF_DIR, PARENT_KEYS, parentList, parseFacts, parseBonds, parseMembers, hasText, topOf, kindLoops, kindKey,
     groupByKind, membersOf, shelf, layoutFor, BUILTIN_FORMS, norm, lev, twin, suggestSections, kinds, backWord, BACK, assemble, setFmRaw, fmList, setParents, linkOf, parentStrings,

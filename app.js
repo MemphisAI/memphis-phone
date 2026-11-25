@@ -9,11 +9,9 @@
   function btn(cls, label, fn, opts) { const b = el('button', 'bl-btn ' + cls, esc(label)); b.type = 'button'; if (opts && opts.disabled) b.disabled = true; b.addEventListener('click', fn); return b; }
   let toastT = null;
   function toast(text, ms) { toastEl.textContent = text; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), ms || 3500); }
-
   let kept = null;
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then((k) => { kept = !!k; }).catch(() => { kept = false; });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-
   let st = { pending: 0, running: false, lastError: null, signedIn: false };
   function drawBadge() {
     badge.className = 'badge' + (st.pending ? ' wait' : '') + (st.lastError && st.pending ? ' bad' : '');
@@ -31,7 +29,6 @@
     if (ev.pending != null && ev.running == null) soon();
   });
   badge.addEventListener('click', () => { if (st.signedIn) syncNow(true); });
-
   let soonT = null;
   function soon() { clearTimeout(soonT); soonT = setTimeout(() => syncNow(false), 4000); }
   async function syncNow(loud) {
@@ -47,14 +44,12 @@
   window.addEventListener('online', () => syncNow(false));
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(false); });
   setInterval(() => { if (document.visibilityState === 'visible') syncNow(false); }, 5 * 60 * 1000);
-
   async function exportUnsynced() {
     const text = await E.exportText();
     if (!text) { toast('Everything is synced: nothing to export.'); return; }
     try { if (navigator.share) { await navigator.share({ title: 'Memphis: not synced yet', text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     try { await navigator.clipboard.writeText(text); toast('Copied. Paste it into Notes to keep it safe.'); } catch (e) { toast('Could not share or copy here.'); }
   }
-
   let screen = 'home';
   const APPS = window.PHONE_APPS || [];
   function render() {
@@ -116,13 +111,11 @@
     sy.appendChild(r2);
     view.appendChild(sy);
   }
-
   if (page !== 'home') {
     back.hidden = false;
     back.addEventListener('click', () => { location.href = 'index.html'; });
     E.signedIn().then((s) => { if (!s) location.href = 'index.html'; });
   }
-
   window.Phone = { engine: E, toast, el, esc, btn, syncNow, page };
   refresh().then(() => { render(); syncNow(false); });
 })();

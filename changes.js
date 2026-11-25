@@ -6,7 +6,6 @@
   const esc = P.esc, el = P.el;
   const safe = (id) => String(id).replace(/[^A-Za-z0-9_-]/g, '-');
   let sets = [], mine = {}, openId = null, sureT = null;
-
   async function load() {
     const paths = await E.list(DIR);
     const got = [], v = {};
@@ -20,7 +19,6 @@
     got.sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
     sets = got; mine = v;
   }
-
   function standing(x) {
     const m = mine[x.id], ph = x.phone || null;
     const heard = m && ph && ph.at === m.at && ph.sig === m.sig && ph.verdict === m.verdict;
@@ -48,7 +46,6 @@
     a.push((x.links || 0) + ' links fixed');
     return a.join(', ') + '.';
   }
-
   function drawList() {
     openId = null;
     view.innerHTML = '';
@@ -73,7 +70,6 @@
       }
     }
   }
-
   function para(cls, html) { return el('p', 'cs-p' + (cls ? ' ' + cls : ''), html); }
   function diffBox(lines) {
     const box = el('div', 'diff');
@@ -90,7 +86,6 @@
     return d;
   }
   const plain = (p) => String(p || '').split('/').pop().replace(/\.md$/i, '');
-
   function drawOne(id) {
     const x = sets.find((s) => s.id === id);
     if (!x) { drawList(); return; }
@@ -173,9 +168,8 @@
     P.toast(verdict === 'approve' ? 'Approved. Alaric applies it at the next sync, if his Hands are untied.' : 'Rejected. It stays unapplied.', 4500);
     drawOne(x.id);
   }
-
   async function refresh() { await load(); if (openId) drawOne(openId); else drawList(); }
   document.addEventListener('phone-synced', () => { refresh(); });
   E.signedIn().then((s) => { if (s) refresh(); });
-  window.__changes = { refresh, standing, group };   // for the checks
+  window.__changes = { refresh, standing, group };
 })();

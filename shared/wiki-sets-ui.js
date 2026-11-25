@@ -6,7 +6,6 @@
   let sets = null, homeRel = {};
   const SET = Object.fromEntries(S.SETS.map(s => [s.id, s]));
   const SUIT_OF_SET = { cards: null, letters: 'bone', chapters: 'bone', events: 'bone' };
-
   function data(files, homes) {
     const h = Object.assign({}, homes || {});
     homeRel = {};
@@ -23,7 +22,6 @@
     return v.kind === 'set' || !!S.member(sets, sid, mid);
   }
   function relOfHome(sid) { const h = SET[sid] && SET[sid].home; return h && !h.includes('/') ? h : null; }
-
   function left(strip) {
     if (!sets) return;
     strip.appendChild(el('div', 'fo-sep'));
@@ -51,7 +49,6 @@
     }
     art.appendChild(grid);
   }
-
   function openIn(s) {
     const b = el('button', 'bl-btn coal sm', 'Open in ' + s.appName); b.type = 'button';
     b.addEventListener('click', async () => { const r = window.wikiAPI.openApp ? await window.wikiAPI.openApp(s.app) : null; if (!r || !r.ok) status('Could not open ' + s.appName + '.', true); });
@@ -166,5 +163,5 @@
     page.appendChild(art);
   }
   window.__wikiSets = { data, has, render, left, tiles, homeRel: (v) => relOfHome(String(v.id).split('|')[0]), sets: () => sets };
-  if (C.W) C.load(true);   // the first read can finish before this file loads: read again so the sets are there
+  if (C.W) C.load(true);
 })();

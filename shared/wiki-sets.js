@@ -2,7 +2,6 @@
 (function (root) {
   const SUIT_OF = { domina: 'domina', aura: 'aura', magia: 'magia' };
   function fmStrip(text) { const s = String(text || '').replace(/\r\n/g, '\n'); if (!s.startsWith('---\n')) return s; const e = s.indexOf('\n---', 3); return e < 0 ? s : s.slice(s.indexOf('\n', e + 4) + 1); }
-
   function cards(text) {
     const body = fmStrip(text);
     const out = [];
@@ -28,14 +27,12 @@
     out.sort((a, b) => (['domina', 'aura', 'magia', 'bone'].indexOf(a.suit) - ['domina', 'aura', 'magia', 'bone'].indexOf(b.suit)) || a.order - b.order || a.id.localeCompare(b.id));
     return { decks, list: out };
   }
-
   function letters(json) {
     let d; try { d = typeof json === 'string' ? JSON.parse(json) : json; } catch (e) { return { list: [], error: 'Dalinari.json could not be read' }; }
     const c = (d && d.cards) || {};
     const list = Object.keys(c).map((k, i) => Object.assign({ id: k, i }, c[k] || {}));
     return { list, glyphs: Object.keys((d && d.glyphs) || {}) };
   }
-
   function chapters(text) {
     const out = []; let book = '', act = '', actName = '', episode = '';
     for (const line of fmStrip(text).split('\n')) {
@@ -49,7 +46,6 @@
     }
     return { list: out };
   }
-
   function events(text) {
     const out = []; let inEv = false, cur = null;
     for (const line of fmStrip(text).split('\n')) {
@@ -67,7 +63,6 @@
     }
     return { list: out };
   }
-
   const SETS = [
     { id: 'cards', name: 'Cards', one: 'card', home: 'Infinity Parables.md', app: 'writer', appName: 'the Writer (Cards view)' },
     { id: 'letters', name: 'Dalinari letters', one: 'letter', home: 'Dalinari/Dalinari.json', app: 'atelier', appName: 'the Atelier' },
