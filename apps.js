@@ -1,1 +1,1 @@
-window.PHONE_APPS = [{"id":"canon","label":"Canon","sub":"Decide the Canon Workbench, one card at a time","href":"canon.html"},{"id":"wiki","label":"Wiki","sub":"Read, find and edit the Evrynthing wiki","href":"wiki.html"}];
+window.PHONE_APPS = [{"id":"canon","label":"Canon","sub":"Decide the Canon Workbench, one card at a time","href":"canon.html"},{"id":"wiki","label":"Wiki","sub":"Read, find and edit the Evrynthing wiki","href":"wiki.html"},{"id":"changes","label":"Change sets","sub":"Approve what Memphis proposes for the notes","href":"changes.html"}];

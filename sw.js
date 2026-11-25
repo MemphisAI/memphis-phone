@@ -1,6 +1,6 @@
 'use strict';
-const VERSION = "e477da9155af";
-const FILES = ["./","app.js","apps.js","branding/blades-icons.js","branding/blades-ui.css","branding/fonts/jura-400.woff2","branding/fonts/jura-600.woff2","branding/fonts/jura-700.woff2","branding/fonts/jura-OFL.txt","canon-bridge.js","canon-phone.css","canon.html","engine.js","github.js","icons/memphis-app-2048.png","icons/memphis-app-256.png","index.html","manifest.webmanifest","phone-shell.css","phone.css","shared/canon-model.js","shared/canon-ui.js","shared/canon.css","shared/sync-model.js","shared/wiki-edit.js","shared/wiki-model.js","shared/wiki-pages.js","shared/wiki-sets-ui.js","shared/wiki-sets.js","shared/wiki-ui.js","shared/wiki.css","store.js","wiki-bridge.js","wiki-phone.css","wiki-phone.js","wiki.html"];
+const VERSION = "6f3e19bde70d";
+const FILES = ["./","app.js","apps.js","branding/blades-icons.js","branding/blades-ui.css","branding/fonts/jura-400.woff2","branding/fonts/jura-600.woff2","branding/fonts/jura-700.woff2","branding/fonts/jura-OFL.txt","canon-bridge.js","canon-phone.css","canon.html","changes-phone.css","changes.html","changes.js","engine.js","github.js","icons/memphis-app-2048.png","icons/memphis-app-256.png","index.html","manifest.webmanifest","phone-shell.css","phone.css","shared/canon-model.js","shared/canon-ui.js","shared/canon.css","shared/sync-model.js","shared/wiki-edit.js","shared/wiki-model.js","shared/wiki-pages.js","shared/wiki-sets-ui.js","shared/wiki-sets.js","shared/wiki-ui.js","shared/wiki.css","store.js","wiki-bridge.js","wiki-phone.css","wiki-phone.js","wiki.html"];
 const CACHE = 'memphis-phone-' + VERSION;
 
 self.addEventListener('install', (e) => {
