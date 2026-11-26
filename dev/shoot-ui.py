@@ -24,7 +24,7 @@ async def gh(route):
     return await route.fulfill(status=404, body='{}')
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
+        b = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'])
         ctx = await b.new_context(viewport={'width':393,'height':852}, device_scale_factor=2, is_mobile=True, has_touch=True, service_workers='block')
         await ctx.route('https://api.github.com/**', gh)
         pg = await ctx.new_page()
@@ -32,14 +32,20 @@ async def main():
         async def shot(n, wait=700): await pg.wait_for_timeout(wait); await pg.screenshot(path=OUT+'/'+n+'.png')
         async def tryclick(sel, t=2500):
             try: await pg.click(sel, timeout=t); return True
-            except Exception as e: logs.append('NOCLICK '+sel); return False
+            except Exception as e:
+                # a busy page (the Flock on a software renderer) can fail the stability wait: click by script
+                ok = await pg.evaluate("(s)=>{const e=document.querySelector(s); if(e){e.click(); return true} return false}", sel)
+                if not ok: logs.append('NOCLICK '+sel)
+                return ok
         await pg.goto(APP+'index.html'); await pg.wait_for_timeout(800)
         await shot('00-signin', 0)
         await pg.fill('input[type=text]', 'MemphisAI/Memphis-Brain'); await pg.fill('input[type=password]', 'fake')
-        await pg.click('button:has-text("Sign in")'); await pg.wait_for_timeout(4000)
-        await shot('01-home')
-        await pg.evaluate("window.scrollTo(0,500)"); await shot('01b-home-scrolled'); await pg.evaluate("window.scrollTo(0,0)")
-        if await tryclick('#t-right'): await shot('01c-home-settings', 500); await pg.click('.sh-scrim', position={'x':200,'y':100}); await pg.wait_for_timeout(300)
+        await pg.click('button:has-text("Sign in")'); await pg.wait_for_timeout(15000)
+        await shot('01-hearth', 7000)
+        if await tryclick('.hb-menu'): await shot('01m-menu', 500); await pg.mouse.click(200, 120); await pg.wait_for_timeout(400)
+        if await tryclick('.hb-hub'): await shot('01c-home-settings', 500); await pg.mouse.click(200, 120); await pg.wait_for_timeout(400)
+        await pg.evaluate("(()=>{const r=document.querySelector('.rooms'); r.scrollTo({left:r.clientWidth})})()"); await shot('01b-book', 1200)
+        await pg.evaluate("document.querySelector('.r-book').scrollTo(0,600)"); await shot('01d-book-scrolled', 600)
         await pg.goto(APP+'wiki.html'); await pg.wait_for_timeout(2000); await shot('02-wiki-index')
         if await tryclick('#t-right'):
             await pg.fill('#find','Ma'); await shot('02b-wiki-search', 500)

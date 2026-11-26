@@ -69,7 +69,7 @@ body.ui .ts{font:400 12px var(--bl-ui);color:var(--mute);letter-spacing:.02em;ma
 .toast{border-radius:14px!important;bottom:calc(92px + env(safe-area-inset-bottom))!important;background:#1a1712!important;z-index:90!important}
 
 /* ---------- home ---------- */
-body[data-page=home].ui{background:radial-gradient(120% 60% at 50% -10%,rgba(217,165,46,.07),transparent 60%),#060605;background-attachment:fixed}
+body[data-page=home].ui{background:#060605}
 body[data-page=home] #view{padding:22px max(18px,env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
 .hello{margin:4px 2px 22px}
 .h-date{font:600 11px var(--bl-ui);letter-spacing:.24em;text-transform:uppercase;color:var(--mute)}
@@ -224,3 +224,59 @@ body[data-page=canon] .option{border-radius:16px!important}
 body[data-page=changes] .cs-back{display:none}
 body[data-page=canon] .bl-btn,body[data-page=changes] .bl-btn{border-radius:14px}
 body[data-page=wiki] .ibox .ib-pics{padding:0;margin:0;gap:0}
+
+/* ---------- the Hearth: rooms over the Flock (home) ---------- */
+.flockbg{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .9s ease;background:#060605}
+.flockbg.on{opacity:1}
+body.hearth #top{display:none}
+body.hearth #view{position:fixed;inset:0;padding:0!important;overflow:hidden;z-index:1}
+.hbar{position:fixed;left:0;right:0;top:0;z-index:5;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:start;
+  padding:calc(env(safe-area-inset-top) + 12px) max(16px,env(safe-area-inset-right)) 14px max(16px,env(safe-area-inset-left));
+  background:linear-gradient(180deg,rgba(6,6,5,.7),rgba(6,6,5,0));pointer-events:none}
+.hbar>*{pointer-events:auto}
+.hb-left{display:flex;flex-direction:column;gap:6px}
+.hb-brand{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.hb-brand .logo{width:26px;height:26px;filter:drop-shadow(0 0 12px rgba(217,165,46,.3))}
+.hb-brand .wm{font:700 13px var(--bl-ui);letter-spacing:.26em;text-transform:uppercase;color:var(--ink)}
+.hb-dl{display:flex;align-items:center;gap:6px}
+.hb-dl .sdot{margin:-6px -4px}
+.hb-date{font:400 13px var(--bl-ui);color:var(--soft);padding-left:4px;display:flex;flex-direction:column;line-height:1.15}
+.hb-date span{font:600 9px var(--bl-ui);letter-spacing:.22em;text-transform:uppercase;color:var(--mute)}
+.hb-menu{justify-self:center;display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:10px;border:1px solid rgba(217,165,46,.32);
+  background:rgba(22,19,15,.78);color:var(--ink);font:600 13px var(--bl-ui);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.hb-menu svg{color:var(--gold-hi)}
+.hb-hub{justify-self:end;width:42px;height:42px;border-radius:10px;border:1px solid rgba(217,165,46,.28);background:rgba(22,19,15,.78);color:var(--ink);display:grid;place-items:center;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.hb-menu:active,.hb-hub:active{background:rgba(217,165,46,.16)}
+.rooms{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+.rooms::-webkit-scrollbar{display:none}
+.room{flex:0 0 100%;height:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative}
+.r-hearth{display:flex;flex-direction:column;justify-content:flex-end}
+.h-low{padding:0 max(22px,env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));
+  background:linear-gradient(180deg,rgba(6,6,5,0),rgba(6,6,5,.55) 40%,rgba(6,6,5,.8))}
+.r-hearth .h-greet{font:400 32px/1.1 var(--serif);margin:0 0 14px;text-shadow:0 2px 20px #000}
+.h-wait{display:flex;flex-wrap:wrap;gap:8px}
+.h-wait .chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--hair2);background:rgba(15,14,12,.72);
+  color:var(--soft);font:400 13px var(--bl-ui);text-decoration:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.h-wait .chip b{color:var(--ink);font-weight:600}
+.h-wait .chip.hot{border-color:rgba(217,165,46,.45)}
+.h-wait .chip.hot b{color:var(--gold-hi)}
+.h-wait .calm{color:var(--mute);font-size:14px}
+.h-next{display:inline-flex;align-items:center;gap:6px;margin-top:22px;padding:0;border:0;background:none;color:var(--mute);font:600 11px var(--bl-ui);letter-spacing:.22em;text-transform:uppercase}
+.r-book{overflow-y:auto;-webkit-overflow-scrolling:touch;background:#060605;
+  padding:calc(env(safe-area-inset-top) + 96px) max(18px,env(safe-area-inset-right)) calc(70px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+.r-head{margin:0 2px 16px}
+.r-head .k{font:600 11px var(--bl-ui);letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.r-head h2{font:400 32px/1.1 var(--serif);margin:6px 0 0}
+body.in-book .hbar{background:linear-gradient(180deg,#060605 70%,rgba(6,6,5,0))}
+.room-dots{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));z-index:5;display:flex;justify-content:center;gap:4px;pointer-events:none}
+.room-dots button{pointer-events:auto;width:28px;height:24px;padding:0;border:0;background:none;display:grid;place-items:center}
+.room-dots button::before{content:"";width:6px;height:6px;border-radius:3px;background:rgba(243,237,225,.28);transition:width .2s,background .2s}
+.room-dots button.on::before{width:18px;background:var(--gold)}
+/* the Menu: every app as its coin */
+.appgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 10px 8px}
+.appgrid .app{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px 16px;border-radius:18px;border:1px solid var(--hair);background:rgba(243,237,225,.025);
+  color:var(--ink);text-decoration:none;text-align:center}
+.appgrid .app:active{border-color:rgba(217,165,46,.45)}
+.appgrid .nm{font:600 15px var(--bl-ui)}
+.appgrid .sb{font:400 12px var(--bl-ui);color:var(--mute)}

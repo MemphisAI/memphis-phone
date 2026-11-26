@@ -127,6 +127,7 @@
   }
   async function drawSignIn() {
     const repo = (await E.status()).repo || '';
+    document.body.classList.remove('hearth'); tline.appendChild(badge); homeSig = '';
     view.innerHTML = '';
     const box = el('section', 'signin');
     box.appendChild(el('div', 'si-mark', IC('book', 34)));
@@ -256,22 +257,114 @@
       ] });
     });
   }
+  // ---------- the Hearth and its rooms ----------
+  // Room 1 is the Hearth: the Flock, as on Alaric. Swipe left for the Book: everything that writes the book.
+  // More rooms come with more apps (one room model, shared with Alaric later).
+  const ROOMS = [{ id: 'hearth', name: 'The Hearth' }, { id: 'book', name: 'The Book' }];
+  let flockFrame = null, roomsEl = null, dotsEl = null, roomNow = 0, homeSig = '';
+  function flockStart() {
+    if (flockFrame || page !== 'home') return;
+    const f = el('iframe', 'flockbg'); f.src = 'flock/flock.html'; f.title = 'Memphis'; f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    f.addEventListener('load', () => {
+      try {
+        const d = f.contentDocument, w = f.contentWindow;
+        const st = d.createElement('style');
+        st.textContent = 'body>*:not(#gl){display:none!important}#gl{touch-action:none}body{background:#060605!important;cursor:default}';
+        d.head.appendChild(st);
+        if (w.__flockSuits) w.__flockSuits(true);   // black, gold and white, as on Alaric (B-138)
+        // The PC frames the rose in a wide window; a phone is tall, so stand further back to keep it whole.
+        const cam = w.__flockCam;
+        if (cam) {
+          let to = 30.5; try { const z = +(w.FLOCK_TUNING && w.FLOCK_TUNING.view && w.FLOCK_TUNING.view.startZoom); if (z >= 10 && z <= 100) to = z; } catch (e) { }
+          const fit = () => Math.min(100, to * (f.clientWidth < f.clientHeight ? 1.12 : 1));   // at rest the Flock is a tall shape: a tall screen holds it at the PC's distance
+          const goal = fit(), from = goal * 1.45; let t = 0; cam.position.z = from;
+          (function zin() { t = Math.min(1, t + 0.012); const e = t * t * (3 - 2 * t); cam.position.z = from + (goal - from) * e; if (t < 1) w.requestAnimationFrame(zin); })();
+          w.addEventListener('resize', () => { cam.position.z = fit(); });
+        }
+        w.__flockPaused = roomNow !== 0 || document.visibilityState !== 'visible';
+        f.classList.add('on');
+      } catch (e) { console.error(e); }
+    });
+    document.body.insertBefore(f, document.body.firstChild);
+    flockFrame = f;
+    document.addEventListener('visibilitychange', flockPause);
+  }
+  function flockPause() { try { if (flockFrame && flockFrame.contentWindow) flockFrame.contentWindow.__flockPaused = roomNow !== 0 || document.visibilityState !== 'visible'; } catch (e) { } }
+  function onRooms() {
+    if (!roomsEl) return;
+    const w = roomsEl.clientWidth || 1, x = roomsEl.scrollLeft / w;
+    if (flockFrame) flockFrame.style.opacity = String(Math.max(0, 1 - x * 1.15));
+    const i = Math.round(x);
+    if (i !== roomNow) { roomNow = i; try { sessionStorage.setItem('home-room', String(i)); } catch (e) { } flockPause(); }
+    if (dotsEl) [...dotsEl.children].forEach((d, k) => d.classList.toggle('on', k === i));
+    document.body.classList.toggle('in-book', i === 1);
+  }
+  function appsMenu(n) {
+    const body = el('div', 'appgrid');
+    const subs = { canon: n.canon != null ? n.canon.toLocaleString('en-GB') + ' decisions left' : '', wiki: n.wiki + ' pages', changes: n.changes ? n.changes + ' waiting' : 'Nothing waiting', writer: 'The book' };
+    for (const a of APPS) {
+      const t = el('a', 'app'); t.href = a.href;
+      t.innerHTML = (window.BladesCoin ? window.BladesCoin(a.id === 'changes' ? 'review' : a.id, 52) : '') + '<span class="nm">' + esc(a.label) + '</span><span class="sb">' + esc(subs[a.id] || '') + '</span>';
+      body.appendChild(t);
+    }
+    sheet({ title: 'Menu', body });
+  }
   async function drawHome() {
     const s = await E.status();
     if (!s.signedIn) { screen = 'signin'; return drawSignIn(); }
     const seq = ++homeSeq;
-    corner('tr', { icon: 'settings', label: 'This phone: sync and key', fn: settings });
+    document.body.classList.add('hearth');
+    corner('tr', null);
     const [ch, pick, n] = await Promise.all([lastChapter(), worldPick(), counts()]);
     if (seq !== homeSeq) return;
+    // Only rebuild when something shown has changed, so a background sync never jumps the rooms under your thumb.
+    const sig = JSON.stringify([ch, pick && pick.id, pick && pick.pic, n, st.pending, greeting(new Date()), new Date().toDateString()]);
+    if (sig === homeSig && roomsEl && roomsEl.isConnected) return;
     const url = pick ? await picURL(pick.pic) : null;
     if (seq !== homeSeq) { if (url) URL.revokeObjectURL(url); return; }
     if (picUrl) URL.revokeObjectURL(picUrl); picUrl = url;
+    homeSig = sig;
     const now = new Date();
     const frag = document.createDocumentFragment();
-    const head = el('section', 'hello');
-    head.appendChild(el('div', 'h-date', esc(now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))));
-    head.appendChild(el('h1', 'h-greet', esc(greeting(now))));
-    frag.appendChild(head);
+
+    // the bar over every room, laid out like the Hearth on Alaric: the mark left, Menu in the middle, the hub right
+    const bar = el('header', 'hbar');
+    const brand = el('div', 'hb-brand', '<img class="logo" src="branding/blades-logo-dark.svg" alt=""><span class="wm">Memphis</span>');
+    const date = el('div', 'hb-date', '<span>' + esc(now.toLocaleDateString('en-GB', { weekday: 'short' })) + '</span>');
+    const dl = el('div', 'hb-dl', esc(now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))); dl.appendChild(badge); date.appendChild(dl);
+    const left = el('div', 'hb-left'); left.append(brand, date);
+    const menu = el('button', 'hb-menu', IC('menu', 16) + '<span>Menu</span>'); menu.type = 'button'; menu.addEventListener('click', () => appsMenu(n));
+    const hub = el('button', 'hb-hub', IC('settings', 20)); hub.type = 'button'; hub.setAttribute('aria-label', 'This phone: sync and key'); hub.addEventListener('click', settings);
+    bar.append(left, menu, hub);
+    frag.appendChild(bar);
+
+    roomsEl = el('div', 'rooms');
+    // --- room 1: the Hearth ---
+    const hearth = el('section', 'room r-hearth'); hearth.setAttribute('aria-label', 'The Hearth');
+    const low = el('div', 'h-low');
+    low.appendChild(el('h1', 'h-greet', esc(greeting(now))));
+    const wait = [];
+    if (n.changes) wait.push({ href: 'changes.html', b: n.changes, t: n.changes === 1 ? 'change set waiting' : 'change sets waiting', hot: true });
+    if (n.canon) wait.push({ href: 'canon.html', b: n.canon.toLocaleString('en-GB'), t: 'canon decisions left' });
+    if (st.pending) wait.push({ fn: () => syncNow(true), b: st.pending, t: 'not synced yet', hot: true });
+    const wl = el('div', 'h-wait');
+    if (!wait.length) wl.appendChild(el('span', 'calm', 'Nothing is waiting for you.'));
+    for (const w of wait) {
+      const a = el(w.href ? 'a' : 'button', 'chip' + (w.hot ? ' hot' : ''), '<b>' + esc(w.b) + '</b> ' + esc(w.t));
+      if (w.href) a.href = w.href; else { a.type = 'button'; a.addEventListener('click', w.fn); }
+      wl.appendChild(a);
+    }
+    low.appendChild(wl);
+    const hint = el('button', 'h-next', '<span>The Book</span>' + IC('chevron-right', 16)); hint.type = 'button';
+    hint.addEventListener('click', () => roomsEl.scrollTo({ left: roomsEl.clientWidth, behavior: 'smooth' }));
+    low.appendChild(hint);
+    hearth.appendChild(low);
+    roomsEl.appendChild(hearth);
+
+    // --- room 2: the Book ---
+    const book = el('section', 'room r-book'); book.setAttribute('aria-label', 'The Book');
+    const bh = el('div', 'r-head', '<span class="k">The Book</span><h2>Evrynthing</h2>');
+    book.appendChild(bh);
     if (ch) {
       const a = el('a', 'hero');
       a.href = 'writer.html';
@@ -281,7 +374,7 @@
         (ch.last ? '<span class="last">' + esc(ch.last) + '</span>' : '') +
         '<span class="meta"><span>' + esc(ch.words.toLocaleString('en-GB') + ' words' + (ch.touched ? ' · ' + ago(ch.touched) : '')) + '</span><span class="go">' + IC('chevron-right', 20) + '</span></span>';
       a.addEventListener('click', () => { try { if (ch.n != null) sessionStorage.setItem('writer-reopen', JSON.stringify({ n: ch.n, at: Date.now() })); } catch (e) { } });
-      frag.appendChild(a);
+      book.appendChild(a);
     }
     if (pick) {
       const a = el('a', 'world' + (url ? '' : ' nopic'));
@@ -290,7 +383,7 @@
         '<span class="w-txt"><span class="k">From your world · ' + esc(pick.folder) + '</span><span class="w-t">' + esc(pick.title) + '</span>' +
         (pick.line ? '<span class="w-l">' + esc(pick.line) + '</span>' : '') + '</span>';
       a.addEventListener('click', () => { try { localStorage.setItem('memphis.wiki.view', JSON.stringify({ kind: 'page', id: pick.id })); } catch (e) { } });
-      frag.appendChild(a);
+      book.appendChild(a);
     }
     const tiles = el('nav', 'tiles');
     const info = {
@@ -308,8 +401,23 @@
         '<span class="t-n">' + (x.n != null ? '<b>' + esc(x.n.toLocaleString('en-GB')) + '</b> ' : '') + esc(x.unit || a.sub || '') + '</span>';
       tiles.appendChild(t);
     }
-    frag.appendChild(tiles);
+    book.appendChild(tiles);
+    roomsEl.appendChild(book);
+    frag.appendChild(roomsEl);
+
+    dotsEl = el('div', 'room-dots');
+    ROOMS.forEach((r, k) => { const d = el('button', '', ''); d.type = 'button'; d.setAttribute('aria-label', r.name); d.addEventListener('click', () => roomsEl.scrollTo({ left: k * roomsEl.clientWidth, behavior: 'smooth' })); dotsEl.appendChild(d); });
+    frag.appendChild(dotsEl);
+
+    const keep = roomsEl;
     view.innerHTML = ''; view.appendChild(frag);
+    roomsEl.addEventListener('scroll', onRooms, { passive: true });
+    window.addEventListener('resize', () => { if (keep === roomsEl) roomsEl.scrollLeft = roomNow * roomsEl.clientWidth; });
+    // back from an app you opened in the Book: land in the Book again
+    let back = Math.max(0, roomNow); try { const v = sessionStorage.getItem('home-room'); if (v != null) back = +v || 0; } catch (e) { }
+    roomsEl.scrollLeft = back * roomsEl.clientWidth; roomNow = -1; onRooms();
+    // The Flock runs on the same thread as the page: wake it only once the rooms are drawn.
+    setTimeout(flockStart, 250);
   }
 
   // ---------- inner pages ----------
