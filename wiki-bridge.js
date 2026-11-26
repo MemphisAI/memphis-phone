@@ -1,4 +1,5 @@
 'use strict';
+try { localStorage.setItem('memphis.wiki.view', JSON.stringify({ kind: 'index' })); } catch (e) { }
 (function () {
   const P = window.Phone, E = P.engine, SM = window.SyncModel;
   const BASE = 'Evrynthing', MEDIA_DIR = BASE + '/Media';

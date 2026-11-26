@@ -133,5 +133,14 @@
     const t = e.target;
     if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.id !== 'find' && !t.closest('.sh-card')))) setTimeout(() => t.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
   });
+  let want = null;
+  try { want = JSON.parse(sessionStorage.getItem('wiki-open') || 'null'); sessionStorage.removeItem('wiki-open'); } catch (e) { }
+  if (want && want.kind === 'page' && want.id) {
+    let tries = 0;
+    const t = setInterval(() => {
+      if (C.W && C.W.pages) { clearInterval(t); if (C.W.pages.has(want.id) && C.view.kind === 'index') C.go({ kind: 'page', id: want.id }); }
+      else if (++tries > 150) clearInterval(t);
+    }, 100);
+  }
   window.__wikiPhone = { set, open: () => open, search };
 })();

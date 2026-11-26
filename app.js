@@ -404,7 +404,7 @@
       a.innerHTML = (url ? '<span class="w-img"><img alt="" src="' + url + '"></span>' : '') +
         '<span class="w-txt"><span class="k">From your world · ' + esc(pick.folder) + '</span><span class="w-t">' + esc(pick.title) + '</span>' +
         (pick.line ? '<span class="w-l">' + esc(pick.line) + '</span>' : '') + '</span>';
-      a.addEventListener('click', () => { try { localStorage.setItem('memphis.wiki.view', JSON.stringify({ kind: 'page', id: pick.id })); } catch (e) { } });
+      a.addEventListener('click', () => { try { sessionStorage.setItem('wiki-open', JSON.stringify({ kind: 'page', id: pick.id })); } catch (e) { } });
       book.appendChild(a);
     }
     const tiles = el('nav', 'tiles');
