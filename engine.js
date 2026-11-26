@@ -90,11 +90,15 @@
         if (now && now.text === o.text) { await store.del('outbox', o.path); continue; }
         if (now && (SM.stampOnly(now.text, o.text) || SM.stampOnly(o.text, o.baseText))) { await store.del('outbox', o.path); continue; }
         if (now && o.baseText != null && SM.stampOnly(now.text, o.baseText)) { await store.put('outbox', o.path, Object.assign(o, { base: rsha, baseText: now.text, copy: false })); continue; }
-        if (o.path === SM.DECISIONS && rsha) {
-          const theirs = (await store.get('files', o.path)).text;
-          const m = SM.mergeDecisions(o.baseText ? JSON.parse(o.baseText) : {}, JSON.parse(o.text), JSON.parse(theirs)).state;
-          await store.put('outbox', o.path, Object.assign(o, { text: JSON.stringify(m, null, 1), base: rsha, baseText: theirs }));
-        } else if (!o.copy) await store.put('outbox', o.path, Object.assign(o, { copy: true }));
+        if (!now) { await store.put('outbox', o.path, Object.assign(o, { base: null, baseText: null, copy: false })); continue; }
+        let m;
+        try { m = SM.mergeFile(o.path, o.baseText, now.text, o.text, { prefer: 'theirs' }); }
+        catch (e) { m = { text: o.text, lost: now.text, loser: 'ours' }; }
+        if (m.lost) {
+          const k = SM.keptName(o.path, Date.parse(iso()), m.loser === 'ours' ? 'alaric' : 'phone');
+          await store.put('outbox', k, { path: k, text: m.lost, base: null, baseText: null, copy: false, at: iso() });
+        }
+        await store.put('outbox', o.path, Object.assign(o, { text: m.text, base: rsha, baseText: now.text, copy: false }));
       }
       await store.put('meta', 'head', head); await store.put('meta', 'tree', cm.tree);
       return { pulled: todo.length, removed, head };

@@ -216,6 +216,7 @@ const NUM=["One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten",
 const SEED = {books:[]};
 let STRUCT = {books:[]};
 const _diskMd={};
+let _diskBook=null;
 let ALL=[];
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 let _idc=0, _idmap=new Map();
@@ -259,6 +260,7 @@ async function loadBook(){
       const all=await window.writerAPI.msReadAll();
       if(all&&all.ok){
         const files=all.files||{};
+        if(files['book.json']!=null) _diskBook=String(files['book.json']).split(String.fromCharCode(13)).join('');
         if(files['book.json']){
           try{ const j=JSON.parse(files['book.json']);
                if(!j||!j.structure||!Array.isArray(j.structure.books)) throw new Error('no structure in book.json');
@@ -303,6 +305,92 @@ function bookJsonText(){
   return JSON.stringify({structure:clean, meta:MK}, null, 1);
 }
 async function saveBookJson(){ await mustWrite('book.json', bookJsonText()); }
+const noCR=(t)=>t==null?null:String(t).split(String.fromCharCode(13)).join('');
+const thisSide=()=>(window.writerAPI&&window.writerAPI.phone)?'phone':'alaric';
+const otherSide=()=>(window.writerAPI&&window.writerAPI.phone)?'alaric':'phone';
+let _refreshing=false, _mustReload=false;
+async function fileAway(file, text, who){
+  if(!window.SyncModel||text==null) return;
+  const k=SyncModel.keptName('Manuscript/'+file, Date.now(), who).replace(/^Manuscript\//,'');
+  try{ await window.writerAPI.msWrite(k, text); }catch(e){}
+}
+function chapterByN(n){ let hit=null; STRUCT.books.forEach(b=>b.acts.forEach(a=>(a.eps||[]).forEach(e=>(e.ch||[]).forEach(c=>{ if(c.n===n) hit=c; })))); return hit; }
+function sameShape(a,b){
+  try{ const s=(t)=>JSON.stringify(JSON.parse(t),(k,v)=>(k==='draft'||k==='state'||k==='loop'||k==='play'||k.startsWith('_'))?undefined:v); return s(a)===s(b); }catch(e){ return false; }
+}
+function applyChapterText(ch, text){
+  const p=parseChapterMd(text);
+  ch.draft=p.body; ch.state=p.state; ch.loop=p.loop||ch.loop; ch._touched=p.touched||ch._touched; if(p.play&&p.play.length) ch.play=p.play;
+  if(P && P.ch===ch){
+    const tx=[...document.querySelectorAll('#plates .ptext')], at=tx.indexOf(document.activeElement);
+    P.plates=parsePlates(ch.draft); renderPlates(at>=0?Math.min(at,P.plates.length-1):null, true);
+  }
+}
+async function writeChapter(ch, file, text){
+  let expect=Object.prototype.hasOwnProperty.call(_diskMd,file)?_diskMd[file]:null;
+  let r=await window.writerAPI.msWrite(file, text, expect);
+  for(let n=0; r && r.changed && window.SyncModel && n<3; n++){
+    const theirs=noCR(r.content);
+    const m=SyncModel.mergeText(expect, theirs, text, {prefer:'theirs'});
+    if(m.lost) await fileAway(file, m.lost, m.loser==='ours'?otherSide():thisSide());
+    const now=buildChapterMd(ch);
+    applyChapterText(ch, now===text ? m.text : SyncModel.mergeText(text, m.text, now, {prefer:'theirs'}).text);
+    if(now!==text) _pendingCh.add(ch);
+    expect=theirs; text=m.text;
+    r=await window.writerAPI.msWrite(file, text, expect);
+  }
+  if(!r||!r.ok) throw new Error((r&&r.reason)||'write failed');
+  _diskMd[file]=text;
+}
+async function writeBook(bj){
+  const mine=bj;
+  let expect=_diskBook, r=await window.writerAPI.msWrite('book.json', bj, expect==null?undefined:expect);
+  for(let n=0; r && r.changed && window.SyncModel && n<3; n++){
+    const theirs=noCR(r.content);
+    const m=theirs==null?bj:SyncModel.mergeJson(expect, theirs, bj, 'theirs');
+    if(m==null) break;
+    expect=theirs; bj=m;
+    r=await window.writerAPI.msWrite('book.json', bj, expect);
+  }
+  if(!r||!r.ok) throw new Error((r&&r.reason)||'write failed');
+  _diskBook=bj;
+  if(bj!==mine && !sameShape(bj, mine)) setTimeout(reloadKeepingPlace, 0);
+}
+function reloadKeepingPlace(){
+  _mustReload=true;
+  try{ sessionStorage.setItem('writer-reopen', JSON.stringify({n: current?current.n:null, at: Date.now()})); }catch(e){}
+  location.reload();
+}
+async function refreshFromDisk(){
+  if(_refreshing||_mustReload||SAVE_LOCK==='all'||!window.writerAPI||!window.SyncModel) return;
+  _refreshing=true;
+  try{
+    await doSave();
+    const all=await window.writerAPI.msReadAll(); if(!all||!all.ok) return;
+    const files=all.files||{};
+    const bk=noCR(files['book.json']);
+    if(bk!=null && bk!==_diskBook){
+      if(!sameShape(bk, bookJsonText())){ reloadKeepingPlace(); return; }
+      _diskBook=bk;
+    }
+    let any=false;
+    for(const fn in files){
+      if(!/^Ch-\d+\.md$/.test(fn)) continue;
+      const t=noCR(files[fn]); if(t===_diskMd[fn]) continue;
+      const ch=chapterByN(parseInt(fn.slice(3),10)); if(!ch){ reloadKeepingPlace(); return; }
+      const base=Object.prototype.hasOwnProperty.call(_diskMd,fn)?_diskMd[fn]:null, mine=buildChapterMd(ch);
+      if(mine===base || (base==null && !String(ch.draft||'').trim())) applyChapterText(ch, t);
+      else {
+        const m=SyncModel.mergeText(base, t, mine, {prefer:'theirs'});
+        if(m.lost) await fileAway(fn, m.lost, m.loser==='ours'?otherSide():thisSide());
+        applyChapterText(ch, m.text);
+        if(m.text!==t){ _pendingCh.add(ch); markDirty(); }
+      }
+      _diskMd[fn]=t; any=true;
+    }
+    if(any){ try{ drawOrrery(); if(_onDash) dashboard(); else updateStatus(); }catch(e){} }
+  } finally { _refreshing=false; }
+}
 const sheet=document.getElementById('sheet');
 function flowSheet(){ sheet.classList.remove('flow'); void sheet.offsetWidth; sheet.classList.add('flow'); }
 const Memphis = (function(){
@@ -1100,6 +1188,9 @@ document.getElementById('homeBtn').onclick=dashboard;
   decorateIcons();
   drawOrrery();
   dashboard();
+  try{ const r=JSON.parse(sessionStorage.getItem('writer-reopen')||'null'); sessionStorage.removeItem('writer-reopen');
+    if(r && r.n!=null && Date.now()-r.at<60000){ const c=chapterByN(r.n); if(c) openChapter(c); } }catch(e){}
+  if(window.writerAPI && window.writerAPI.onFilesChanged) window.writerAPI.onFilesChanged(()=>{ refreshFromDisk(); });
 })();
 function openPanel(id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));
@@ -1178,13 +1269,13 @@ function doSave(){
     ch._touched=Date.now();
     return {ch, file, text:buildChapterMd(ch)};
   }).filter(Boolean);
-  const bj = SAVE_LOCK==='structure' ? null : bookJsonText();
+  const bj = (SAVE_LOCK==='structure' || _mustReload) ? null : bookJsonText();
   saveLabel.textContent='Saving…';
   _saveChain=_saveChain.then(async()=>{
     const failed=[];
-    for(const j of jobs){ try{ await mustWrite(j.file, j.text); _diskMd[j.file]=j.text; }catch(e){ failed.push(j.ch); console.error('save failed',j.file,e); } }
+    for(const j of jobs){ try{ if(window.writerAPI) await writeChapter(j.ch, j.file, j.text); }catch(e){ failed.push(j.ch); console.error('save failed',j.file,e); } }
     let bjFail=false;
-    if(bj!=null){ try{ await mustWrite('book.json', bj); }catch(e){ bjFail=true; console.error('save failed book.json',e); } }
+    if(bj!=null){ try{ if(window.writerAPI) await writeBook(bj); }catch(e){ bjFail=true; console.error('save failed book.json',e); } }
     if(failed.length || bjFail){
       failed.forEach(c=>_pendingCh.add(c));
       dirty=true; saveBtn.classList.remove('saved'); saveLabel.textContent='Save failed';
