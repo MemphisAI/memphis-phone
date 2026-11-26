@@ -276,10 +276,14 @@
         const cam = w.__flockCam;
         if (cam) {
           let to = 30.5; try { const z = +(w.FLOCK_TUNING && w.FLOCK_TUNING.view && w.FLOCK_TUNING.view.startZoom); if (z >= 10 && z <= 100) to = z; } catch (e) { }
-          const fit = () => Math.min(100, to * (f.clientWidth < f.clientHeight ? 1.12 : 1));   // at rest the Flock is a tall shape: a tall screen holds it at the PC's distance
-          const goal = fit(), from = goal * 1.45; let t = 0; cam.position.z = from;
-          (function zin() { t = Math.min(1, t + 0.012); const e = t * t * (3 - 2 * t); cam.position.z = from + (goal - from) * e; if (t < 1) w.requestAnimationFrame(zin); })();
-          w.addEventListener('resize', () => { cam.position.z = fit(); });
+          const tall = () => f.clientWidth < f.clientHeight;
+          // at rest the Flock is a tall shape: a tall screen holds it at the PC's distance;
+          // awake it is the rose, which reads small at his start distance on a narrow screen, so it comes closer
+          flockZ.rest = () => to * (tall() ? 1.12 : 1);
+          flockZ.wake = () => { const a = f.clientWidth / Math.max(1, f.clientHeight); return tall() ? Math.min(110, Math.max(to * 0.5, to * 0.3 / a)) : to; };   // measured: the rose spans ~85% of a 393×852 screen at 0.65× his start zoom
+          flockZ.cam = cam; flockZ.w = w;
+          cam.position.z = flockZ.rest() * 1.45; flockZoom(flockZ.rest(), 0.012);
+          w.addEventListener('resize', () => { cam.position.z = flockAwake ? flockZ.wake() : flockZ.rest(); });
         }
         w.__flockPaused = roomNow !== 0 || document.visibilityState !== 'visible';
         f.classList.add('on');
@@ -289,13 +293,29 @@
     flockFrame = f;
     document.addEventListener('visibilitychange', flockPause);
   }
+  // Tap the Flock on the Hearth: it wakes into the rose for a while (no voice on the phone, so this is only to look at).
+  const flockZ = {}; let flockAwake = false, flockT = null, zoomRun = 0;
+  function flockZoom(goal, step) {
+    const cam = flockZ.cam, w = flockZ.w; if (!cam) return;
+    const run = ++zoomRun, from = cam.position.z; let t = 0;
+    (function z() { if (run !== zoomRun) return; t = Math.min(1, t + (step || 0.01)); const e = t * t * (3 - 2 * t); cam.position.z = from + (goal - from) * e; if (t < 1) w.requestAnimationFrame(z); })();
+  }
+  function flockState(name) { try { const b = flockFrame.contentDocument.querySelector('.sbtn[data-s="' + name + '"]'); if (b) b.click(); } catch (e) { } }
+  function flockWake(on) {
+    if (!flockFrame || !flockZ.cam || on === flockAwake) return;
+    flockAwake = on; clearTimeout(flockT);
+    flockState(on ? 'listening' : 'resting');
+    flockZoom(on ? flockZ.wake() : flockZ.rest(), on ? 0.008 : 0.006);
+    document.body.classList.toggle('flock-awake', on);
+    if (on) flockT = setTimeout(() => flockWake(false), 25000);
+  }
   function flockPause() { try { if (flockFrame && flockFrame.contentWindow) flockFrame.contentWindow.__flockPaused = roomNow !== 0 || document.visibilityState !== 'visible'; } catch (e) { } }
   function onRooms() {
     if (!roomsEl) return;
     const w = roomsEl.clientWidth || 1, x = roomsEl.scrollLeft / w;
     if (flockFrame) flockFrame.style.opacity = String(Math.max(0, 1 - x * 1.15));
     const i = Math.round(x);
-    if (i !== roomNow) { roomNow = i; try { sessionStorage.setItem('home-room', String(i)); } catch (e) { } flockPause(); }
+    if (i !== roomNow) { roomNow = i; try { sessionStorage.setItem('home-room', String(i)); } catch (e) { } if (i !== 0) flockWake(false); flockPause(); }
     if (dotsEl) [...dotsEl.children].forEach((d, k) => d.classList.toggle('on', k === i));
     document.body.classList.toggle('in-book', i === 1);
   }
@@ -359,6 +379,7 @@
     hint.addEventListener('click', () => roomsEl.scrollTo({ left: roomsEl.clientWidth, behavior: 'smooth' }));
     low.appendChild(hint);
     hearth.appendChild(low);
+    hearth.addEventListener('click', (e) => { if (e.target.closest('a,button')) return; flockWake(!flockAwake); });
     roomsEl.appendChild(hearth);
 
     // --- room 2: the Book ---
