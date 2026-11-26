@@ -18,6 +18,38 @@
   function btn(cls, label, fn, opts) { const b = el('button', 'bl-btn ' + cls, esc(label)); b.type = 'button'; if (opts && opts.disabled) b.disabled = true; b.addEventListener('click', fn); return b; }
   let toastT = null;
   function toast(text, ms) { toastEl.textContent = text; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), ms || 3500); }
+  const PRESS = 'button, a[href], [role="button"], .chip, .tile, .hero, .world, .app, .sbtn, summary, select';
+  let pressed = null, px0 = 0, py0 = 0;
+  function letGo() {
+    if (!pressed) return;
+    const p = pressed; pressed = null;
+    p.classList.remove('is-pressed'); p.classList.add('is-released');
+    setTimeout(() => p.classList.remove('is-released'), 480);
+  }
+  document.addEventListener('pointerdown', (e) => {
+    if (e.button > 0 || !e.target.closest) return;
+    const t = e.target.closest(PRESS);
+    if (!t || t.disabled || t.closest('[contenteditable="true"]')) return;
+    letGo(); pressed = t; px0 = e.clientX; py0 = e.clientY;
+    t.classList.remove('is-released'); t.classList.add('is-pressed');
+  }, { passive: true, capture: true });
+  document.addEventListener('pointermove', (e) => { if (pressed && Math.hypot(e.clientX - px0, e.clientY - py0) > 10) letGo(); }, { passive: true, capture: true });
+  for (const ev of ['pointerup', 'pointercancel', 'dragstart']) document.addEventListener(ev, letGo, { passive: true, capture: true });
+  window.addEventListener('scroll', letGo, { passive: true, capture: true });
+  let hxLabel = null;
+  function haptic() {
+    try {
+      if (navigator.vibrate) { navigator.vibrate(8); return; }
+      if (!/iP(hone|ad|od)/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))) return;
+      if (!hxLabel) {
+        const id = 'hx-switch', inp = el('input');
+        inp.type = 'checkbox'; inp.id = id; inp.setAttribute('switch', ''); inp.tabIndex = -1;
+        hxLabel = el('label', 'hx'); hxLabel.htmlFor = id; hxLabel.setAttribute('aria-hidden', 'true');
+        hxLabel.appendChild(inp); document.body.appendChild(hxLabel);
+      }
+      hxLabel.click();
+    } catch (e) { }
+  }
   let kept = null;
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then((k) => { kept = !!k; }).catch(() => { kept = false; });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -265,12 +297,12 @@
         if (cam) {
           let to = 30.5; try { const z = +(w.FLOCK_TUNING && w.FLOCK_TUNING.view && w.FLOCK_TUNING.view.startZoom); if (z >= 10 && z <= 100) to = z; } catch (e) { }
           const tall = () => f.clientWidth < f.clientHeight;
-          flockZ.rest = () => to * (tall() ? 1.12 : 1);
           flockZ.wake = () => { const a = f.clientWidth / Math.max(1, f.clientHeight); return tall() ? Math.min(110, Math.max(to * 0.5, to * 0.3 / a)) : to; };
           flockZ.cam = cam; flockZ.w = w;
-          cam.position.z = flockZ.rest() * 1.45; flockZoom(flockZ.rest(), 0.012);
-          w.addEventListener('resize', () => { cam.position.z = flockAwake ? flockZ.wake() : flockZ.rest(); });
+          cam.position.z = flockZ.wake() * 1.45; flockZoom(flockZ.wake(), 0.008);
+          w.addEventListener('resize', () => { cam.position.z = flockZ.wake(); });
         }
+        flockState('listening');
         w.__flockPaused = roomNow !== 0 || document.visibilityState !== 'visible';
         f.classList.add('on');
       } catch (e) { console.error(e); }
@@ -279,28 +311,20 @@
     flockFrame = f;
     document.addEventListener('visibilitychange', flockPause);
   }
-  const flockZ = {}; let flockAwake = false, flockT = null, zoomRun = 0;
+  const flockZ = {}; let zoomRun = 0;
   function flockZoom(goal, step) {
     const cam = flockZ.cam, w = flockZ.w; if (!cam) return;
     const run = ++zoomRun, from = cam.position.z; let t = 0;
     (function z() { if (run !== zoomRun) return; t = Math.min(1, t + (step || 0.01)); const e = t * t * (3 - 2 * t); cam.position.z = from + (goal - from) * e; if (t < 1) w.requestAnimationFrame(z); })();
   }
   function flockState(name) { try { const b = flockFrame.contentDocument.querySelector('.sbtn[data-s="' + name + '"]'); if (b) b.click(); } catch (e) { } }
-  function flockWake(on) {
-    if (!flockFrame || !flockZ.cam || on === flockAwake) return;
-    flockAwake = on; clearTimeout(flockT);
-    flockState(on ? 'listening' : 'resting');
-    flockZoom(on ? flockZ.wake() : flockZ.rest(), on ? 0.008 : 0.006);
-    document.body.classList.toggle('flock-awake', on);
-    if (on) flockT = setTimeout(() => flockWake(false), 25000);
-  }
   function flockPause() { try { if (flockFrame && flockFrame.contentWindow) flockFrame.contentWindow.__flockPaused = roomNow !== 0 || document.visibilityState !== 'visible'; } catch (e) { } }
   function onRooms() {
     if (!roomsEl) return;
     const w = roomsEl.clientWidth || 1, x = roomsEl.scrollLeft / w;
     if (flockFrame) flockFrame.style.opacity = String(Math.max(0, 1 - x * 1.15));
     const i = Math.round(x);
-    if (i !== roomNow) { roomNow = i; try { sessionStorage.setItem('home-room', String(i)); } catch (e) { } if (i !== 0) flockWake(false); flockPause(); }
+    if (i !== roomNow) { const was = roomNow; roomNow = i; try { sessionStorage.setItem('home-room', String(i)); } catch (e) { } if (was >= 0) haptic(); flockPause(); }
     if (dotsEl) [...dotsEl.children].forEach((d, k) => d.classList.toggle('on', k === i));
     document.body.classList.toggle('in-book', i === 1);
   }
@@ -359,7 +383,6 @@
     hint.addEventListener('click', () => roomsEl.scrollTo({ left: roomsEl.clientWidth, behavior: 'smooth' }));
     low.appendChild(hint);
     hearth.appendChild(low);
-    hearth.addEventListener('click', (e) => { if (e.target.closest('a,button')) return; flockWake(!flockAwake); });
     roomsEl.appendChild(hearth);
     const book = el('section', 'room r-book'); book.setAttribute('aria-label', 'The Book');
     const bh = el('div', 'r-head', '<span class="k">The Book</span><h2>Evrynthing</h2>');
@@ -420,6 +443,6 @@
     borrowed.then(() => E.signedIn()).then((s) => { if (!s) location.href = 'index.html'; });
   }
   window.Phone = { engine: E, toast, el, esc, btn, syncNow, page,
-    ui: { corner, title, sheet, closeSheet, icon: IC, onBack: (f) => { backFn = f; } } };
+    ui: { corner, title, sheet, closeSheet, icon: IC, haptic, onBack: (f) => { backFn = f; } } };
   borrowed.then(refresh).then(() => { render(); syncNow(false); });
 })();

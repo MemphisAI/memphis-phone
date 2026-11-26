@@ -892,34 +892,64 @@ function renderProsePara(para, first){
   if(/^#{1,3}\s+/.test(t)){
     return `<div class="pp-head">${t.replace(/^#{1,3}\s+/,'').replace(/</g,'&lt;')}</div>`;
   }
-  return `<p style="margin:0 0 .8em;text-indent:${first?'0':'1.4em'}">${t.replace(/</g,'&lt;').replace(/\n/g,' ')}</p>`;
+  return `<p style="margin:0 0 .8em;text-indent:${first?'0':'1.4em'}">${dalHTML(t.replace(/</g,'&lt;').replace(/\n/g,' '))}</p>`;
+}
+const DAL_RX=/\{\{\s*dalinari:\s*([^{}\n]*?)\s*\}\}/g;
+const DALFONT={ ok:false, b64:null };
+function dalHTML(text){
+  return String(text).replace(DAL_RX,(m,w)=>w?`<span class="dal${DALFONT.ok?'':' nofont'}" title="Dalinari: ${w.replace(/"/g,'&quot;')}">${w}</span>`:'');
+}
+async function loadDalFont(){
+  try{
+    if(window.writerAPI && window.writerAPI.dalinariFont){
+      const r=await window.writerAPI.dalinariFont();
+      if(r && r.ok && r.b64){
+        const bin=atob(r.b64), u=new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+        const ff=new FontFace('Dalinari Book', u.buffer);
+        await ff.load(); document.fonts.add(ff);
+        DALFONT.ok=true; DALFONT.b64=r.b64; return true;
+      }
+    }
+  }catch(e){ console.error('Dalinari font', e); }
+  try{ DALFONT.ok=localDalinari(); }catch(e){ DALFONT.ok=false; }
+  return DALFONT.ok;
+}
+function localDalinari(){
+  const c=document.createElement('canvas').getContext('2d'), s='dalina thilie';
+  c.font='40px monospace'; const a=c.measureText(s).width;
+  c.font='40px "Dalinari", monospace'; const b=c.measureText(s).width;
+  return Math.abs(a-b)>0.5;
 }
 const INSERTS={
   dialogue:{ before:'\n"', after:'"\n' },
   break:{ before:'\n\n* * *\n\n', after:'' },
   beat:{ before:'\n[[ note: ', after:' ]]\n' },
-  time:{ before:'\n## ', after:'\n' }
+  time:{ before:'\n## ', after:'\n' },
+  dalinari:{ before:'{{dalinari: ', after:'}}', wrap:true }
 };
-function insertAtCaret(before,after){
+function insertAtCaret(before,after,wrap){
   const pr=activePlate(); if(!pr) return;
   if(document.activeElement!==pr) pr.focus();
   const sel=window.getSelection();
   let range;
   if(sel && sel.rangeCount && pr.contains(sel.anchorNode)){ range=sel.getRangeAt(0); }
   else { range=document.createRange(); range.selectNodeContents(pr); range.collapse(false); }
+  const inner=wrap ? range.toString().replace(/[{}]/g,'').replace(/\s*\n\s*/g,' ').trim() : '';
   range.deleteContents();
-  const text=before+after;
+  const text=before+inner+after;
   const tn=document.createTextNode(text);
   range.insertNode(tn);
+  const at=inner ? text.length : before.length;
   const caret=document.createRange();
-  caret.setStart(tn, before.length); caret.setEnd(tn, before.length);
+  caret.setStart(tn, at); caret.setEnd(tn, at);
   sel.removeAllRanges(); sel.addRange(caret);
   pr.dispatchEvent(new Event('input'));
 }
 function wireInserts(){
   document.querySelectorAll('#insToolbar .ins-btn').forEach(b=>{
     b.onmousedown=(e)=>{ e.preventDefault(); };
-    b.onclick=()=>{ if(b.dataset.ins==='snippets'){ openSnippets(); return; } const spec=INSERTS[b.dataset.ins]; if(spec)insertAtCaret(spec.before,spec.after); };
+    b.onclick=()=>{ if(b.dataset.ins==='snippets'){ openSnippets(); return; } const spec=INSERTS[b.dataset.ins]; if(spec)insertAtCaret(spec.before,spec.after,spec.wrap); };
   });
 }
 function wireProseKeys(prose){
@@ -1183,6 +1213,7 @@ document.getElementById('homeBtn').onclick=dashboard;
     if(!STRUCT.books.length)STRUCT=JSON.parse(JSON.stringify(SEED)); }
   showLoadProblem();
   try{ await loadLibrary(); }catch(e){ console.error('loadLibrary failed',e); }
+  loadDalFont();
   wireTree();
   try{ document.getElementById('brandRose').innerHTML=roseCoin(); document.getElementById('insBreakIc').innerHTML=roseMono(); }catch(e){}
   decorateIcons();
@@ -1538,7 +1569,7 @@ function openReader(selected){
     if(b!==lastBook){ html+=`<div class="ms-part">BOOK ${roman(b.n)}</div>`; lastBook=b; }
     html+=`<div class="ms-chhead">Chapter ${roman(c.n)}<span class="csub">${c.t}</span></div>`;
     html+= (c.draft&&c.draft.trim())
-      ? `<div class="ms-body">${stripBeatNotes(c.draft).trim().replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`
+      ? `<div class="ms-body">${dalHTML(stripBeatNotes(c.draft).trim().replace(/&/g,'&amp;').replace(/</g,'&lt;'))}</div>`
       : `<div class="ms-blank">[ this chapter is not yet written ]</div>`;
   });
   html+='</div>';
@@ -1577,7 +1608,9 @@ function buildExportHtml(selected){
     .chsub{ display:block; text-transform:none; font-weight:normal; margin-top:.4em; }
     .body{ white-space:pre-wrap; }
     .blank{ text-align:center; font-style:italic; color:#888; margin:2em 0; }
-  </style></head><body>`];
+    .dal{ font-family:'Dalinari Book','Dalinari',"Courier New",monospace; }
+    .dal.nofont{ font-style:italic; }
+  </style>${DALFONT.b64?`<style>@font-face{font-family:'Dalinari Book';src:url(data:font/ttf;base64,${DALFONT.b64}) format('truetype');}</style>`:''}</head><body>`];
   parts.push(`<div class="title">${esc((MK.title||'Evrynthing').toUpperCase())}</div>`);
   if(MK.tag) parts.push(`<div class="subtitle">${esc(MK.tag)}</div>`);
   let lastBook=null;
@@ -1586,7 +1619,7 @@ function buildExportHtml(selected){
     if(b!==lastBook){ parts.push(`<div class="part">BOOK ${roman(b.n)}</div>`); lastBook=b; }
     parts.push(`<div class="chhead">Chapter ${roman(c.n)}<span class="chsub">${esc(c.t)}</span></div>`);
     parts.push( (c.draft&&c.draft.trim())
-      ? `<div class="body">${esc(stripBeatNotes(c.draft).trim())}</div>`
+      ? `<div class="body">${dalHTML(esc(stripBeatNotes(c.draft).trim()))}</div>`
       : `<div class="blank">[ not yet written ]</div>` );
   });
   parts.push('</body></html>');
@@ -1679,7 +1712,8 @@ function entryHTML(name, w){
     return `<div class="de-def">${pos}${String(d[1]||'').replace(/</g,'&lt;')}</div>`;
   }).join('');
   const del = (DICT_META[name]&&DICT_META[name].editable)?`<button class="de-del" data-del="${w.replace(/"/g,'&quot;')}" title="Remove">×</button>`:'';
-  return `<div class="dict-entry"><div class="de-head"><span class="de-word">${w.replace(/</g,'&lt;')}</span>${del}</div>${body}</div>`;
+  const dal = name==='dalinari' ? `<span class="de-dal dal${DALFONT.ok?'':' nofont'}" aria-hidden="true">${w.replace(/</g,'&lt;')}</span>` : '';
+  return `<div class="dict-entry"><div class="de-head"><span><span class="de-word">${w.replace(/</g,'&lt;')}</span>${dal}</span>${del}</div>${body}</div>`;
 }
 function renderByLetter(name, ltr){
   const keys=(DICT.keys[name]||[]).filter(k=>k[0].toLowerCase()===ltr);

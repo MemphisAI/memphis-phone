@@ -90,6 +90,7 @@
   document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('#plates .pgrip')) e.preventDefault(); });
   function carry(grip, i, y) {
     let lastY = y, started = false, done = false;
+    try { window.Phone.ui.haptic(); } catch (e) { }
     const pass = (type) => (ev) => {
       const t = ev.changedTouches && ev.changedTouches[0]; if (!t) return;
       if (ev.cancelable) ev.preventDefault();
