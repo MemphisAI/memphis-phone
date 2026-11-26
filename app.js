@@ -186,7 +186,7 @@
     const text = prose(best.body);
     const paras = text.split(/\n\s*\n/).map((x) => x.replace(/\s+/g, ' ').trim()).filter((x) => x.length > 20);
     let last = paras.length ? paras[paras.length - 1] : '';
-    const sent = last.split(/(?<=[.!?…])\s+/).filter(Boolean);
+    const sent = last.replace(/([.!?…])\s+/g, '$1\u0001').split('\u0001').filter(Boolean);
     last = sent.length ? sent[sent.length - 1] : last;
     if (last.length > 150) last = '…' + last.slice(-150).replace(/^\S*\s/, '');
     return { n: Number(best.fm.chapter) || null, book: Number(best.fm.book) || null, title: best.fm.title || 'Untitled chapter', touched: best.t,
