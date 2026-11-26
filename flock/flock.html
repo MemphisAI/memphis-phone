@@ -13,18 +13,14 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;overflow:hidden;background:var(--void);color:var(--bone);font-family:var(--font-body);}
   #gl{position:fixed;inset:0;display:block;}
-  /* The tuning UI (forge, state buttons, hint) is HIDDEN BY DEFAULT so it never
-     flashes in the Tent. To tune in a browser, open flock.html#tune. */
   #forge,#hud,.hint{display:none;}
   body.tune #forge{display:block;}
   body.tune #hud{display:flex;}
   body.tune .hint{display:block;}
-  /* The brand mark is ALWAYS visible — just "Memphis", top-left. */
   #brand{position:fixed;top:20px;left:24px;z-index:5;pointer-events:none;
     font-family:'Orbitron',system-ui,sans-serif;font-weight:500;font-size:19px;
     letter-spacing:0.34em;text-transform:uppercase;color:var(--bone);
     text-shadow:0 0 22px rgba(201,162,39,0.35),0 2px 14px rgba(0,0,0,0.7);opacity:0.9;}
-
   #hud{position:fixed;top:0;left:0;right:0;justify-content:flex-end;
     align-items:flex-start;padding:16px 18px;pointer-events:none;z-index:5;}
   .brand{font-family:var(--font-display);font-style:italic;font-size:21px;}
@@ -35,7 +31,6 @@
     padding:7px 12px;border-radius:16px;cursor:pointer;backdrop-filter:blur(8px);}
   .sbtn:hover{color:var(--bone);border-color:var(--gold);}
   .sbtn.on{background:var(--ember);border-color:var(--ember);color:#1a0a06;font-weight:600;}
-
   #forge{position:fixed;left:16px;top:66px;bottom:16px;width:290px;background:var(--panel);
     border:1px solid var(--edge);border-radius:14px;padding:14px 15px;z-index:6;overflow-y:auto;
     backdrop-filter:blur(14px);box-shadow:0 20px 50px -20px #000;}
@@ -146,16 +141,11 @@
 <div class="hint">drag to rotate · scroll to zoom</div>
 
 <script src="three.min.js"></script>
-<!-- saved tuning (optional; written by "Save as defaults"). Missing file = baked defaults. -->
 <script src="tuning.js"></script>
 <script>
 (function(){
   if(!window.THREE){document.body.innerHTML='<p style="padding:40px;color:#E4DCC9;font-family:sans-serif">three.min.js did not load — it must sit in the same folder as flock.html.</p>';return;}
-  // Reveal the tuning UI only when opened with #tune (browser tuning). The Tent
-  // loads this plain, so the forge is never shown and can't flash.
   if(location.hash.indexOf('tune')>=0){ document.body.classList.add('tune'); }
-
-  // control definitions: key, label, min, max, step, group
   var CTRLS=[
     ['count','Particles',400,60000,100,'form'],
     ['spread','Disc size (sleep)',0.3,4,0.01,'form'],
@@ -198,17 +188,12 @@
     ['backdrop','Backdrop glow',0,1,0.01,'dark'],
     ['gap','River gap (Rivers)',0,0.6,0.01,'rose']
   ];
-
-  // Sindre's tuned values (forge, 2026-11-01).
   var STATES={
     resting:  {shape:'disc', count:40000, spread:2.6, height:8, tempo:0.35, spin:0.05, life:0, swirl:0, pull:0.015, flow:1, size:0.025, soft:1, trail:0.94, sat:1.09, bri:0.3, color:'#C9A227', roseSize:1, fill:0.3, thick:0.1, knot:0.45, gap:0.16, sway:0.2, roseTurb:0.4, knotStill:0.25, voiceGain:0.6, micGain:1.0, glow:0.0, depthFade:0.0, blend:0.3, smoke:1, rim:0, backdrop:0, twist:0, wobble:0, shimmer:0, aurSpeed:0.5, react:0, ripple:0, twistPulse:0, streak:0, drift:0, driftSpeed:1},
     listening:{shape:'roseknot', count:40000, spread:0.3, height:2.5, tempo:0, spin:4, life:0.25, swirl:0, pull:0.01, flow:0.12, size:0.02, soft:0, trail:0.94, sat:0.84, bri:2.5, color:'#C9A227', roseSize:1, fill:0.24, thick:0.06, knot:0.99, gap:0, sway:0.8, roseTurb:0.4, knotStill:0.25, voiceGain:0.6, micGain:2, glow:0.0, depthFade:0.0, blend:0.3, smoke:1, rim:0, backdrop:0, twist:0, wobble:0, shimmer:0, aurSpeed:0.5, react:0.7, ripple:0, twistPulse:0.3, streak:1, drift:0, driftSpeed:1},
     thinking: {shape:'roseknot', count:40000, spread:0.3, height:2.5, tempo:0, spin:4, life:0.25, swirl:0, pull:0.01, flow:0.9, size:0.02, soft:0, trail:0.94, sat:0.84, bri:2.5, color:'#FFB36A', roseSize:0.6, fill:0.24, thick:0.06, knot:0.99, gap:0, sway:0.8, roseTurb:0.4, knotStill:0.25, voiceGain:0.6, micGain:2, glow:0.0, depthFade:0.0, blend:0.3, smoke:1, rim:0, backdrop:0, twist:0.2, wobble:0, shimmer:0, aurSpeed:2.5, react:1.5, ripple:0, twistPulse:1, streak:1, drift:1, driftSpeed:7},
     speaking: {shape:'roseknot', count:40000, spread:0.3, height:2.5, tempo:0, spin:4, life:0, swirl:0, pull:0.01, flow:0.55, size:0.02, soft:0, trail:0.94, sat:0.84, bri:2.5, color:'#C9A227', roseSize:1, fill:0.24, thick:0.06, knot:0.99, gap:0, sway:0.8, roseTurb:0.4, knotStill:0.25, voiceGain:0.8, micGain:2, glow:0.0, depthFade:0.0, blend:0.3, smoke:1, rim:0, backdrop:0, twist:0.35, wobble:0.3, shimmer:0.45, aurSpeed:0.5, react:0.9, ripple:0, twistPulse:0.3, streak:1, drift:0, driftSpeed:1}
   };
-  // SAVED TUNING: tuning.js (written by the forge's "Save as defaults" in the Tent)
-  // sets window.FLOCK_TUNING. Merge only known keys of the right type, so a bad or
-  // old file can never break the flock; anything missing keeps the baked value.
   (function(){ var T=window.FLOCK_TUNING; if(!T||typeof T!=='object'||!T.states) return;
     for(var st in STATES){ var src=T.states[st]; if(!src||typeof src!=='object') continue;
       for(var k in STATES[st]){ if(!(k in src)) continue;
@@ -217,9 +202,6 @@
         else if(k==='shape' && ['disc','diamond','sphere','rose','rivers','roseknot'].indexOf(v)>=0) STATES[st][k]=v;
         else if(k==='color' && /^#[0-9a-fA-F]{6}$/.test(v)) STATES[st][k]=v; } }
   })();
-  // WRITER MODE: a complete second set of states, used while the Evrynthing Writer
-  // is open (and while previewing it in the forge). Starts as a copy of the normal
-  // set; saved separately as writerStates.
   var WSTATES=JSON.parse(JSON.stringify(STATES));
   (function(){ var T=window.FLOCK_TUNING; if(!T||typeof T!=='object'||!T.writerStates) return;
     for(var st in WSTATES){ var src=T.writerStates[st]; if(!src||typeof src!=='object') continue;
@@ -230,10 +212,8 @@
         else if(k==='color' && /^#[0-9a-fA-F]{6}$/.test(v)) WSTATES[st][k]=v; } }
   })();
   var DEFAULTS=JSON.parse(JSON.stringify(STATES)), WDEFAULTS=JSON.parse(JSON.stringify(WSTATES));
-  var editProfile='normal';                       // which set the forge edits
+  var editProfile='normal';
   function PROF(){ return editProfile==='writer'?WSTATES:STATES; }
-  // profMix: 0 = normal set, 1 = writer set; eased (~2s) so opening the Writer
-  // glides between the two looks instead of jumping.
   var profMix=0, _blend={}, _cA=new THREE.Color(), _cB=new THREE.Color();
   function getTarget(st){
     if(profMix<0.001) return STATES[st];
@@ -245,21 +225,14 @@
     return o; }
   var editing='resting', curState='resting';
   var C=JSON.parse(JSON.stringify(STATES.resting));
-
   var PALETTE=['#FF6A3D','#E0452B','#FF3D5A','#FF8A4D','#FFB36A','#FFD98A','#C9A227','#E8E04A','#9ACD32',
     '#5DCAA5','#2FB3C9','#378ADD','#5B6EE0','#7F77DD','#A77DFF','#D4537E','#FF5FA0','#FFFFFF'];
-
   var scene=new THREE.Scene();
   var cam=new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 300); cam.position.set(0,0,40);
-  window.__flockCam=cam; // harmless hook so the Tent can set zoom (no effect in the browser)
+  window.__flockCam=cam;
   var renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
-  // Full clear each frame now — trails are real world-space geometry, not screen
-  // residue, so there is nothing to leave burned into the background.
   renderer.setClearColor(0x060605,1); renderer.autoClearColor=true;
-
-  // two sprites: hard grain + soft glow; we blend size/opacity by softness,
-  // and swap the map when softness crosses 0.5 for a true hard-edge grain.
   function mkSprite(hard){
     var c=document.createElement('canvas');c.width=c.height=64;var x=c.getContext('2d');
     var g=x.createRadialGradient(32,32,0,32,32,32);
@@ -273,59 +246,31 @@
     x.fillStyle=g;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);
   }
   var hardTex=mkSprite(true), softTex=mkSprite(false);
-
-  // ROSE FAMILY (rose / rivers / rose knot). Its look is tuned PER STATE in the
-  // forge's "Rose" section: roseSize, fill, thick, knot, gap, sway, roseTurb.
-  // Travel speed along the curve is the per-state 'flow' (Motion > Rose flow).
-  // The gather needed to keep the petals sharp is DERIVED from that speed (see
-  // rosePull in animate): a soft spring chasing a fast target cuts the corners
-  // and turns the petals into a propeller, but a slow flow needs almost none.
-  var ROSE_BASE=13.455;     // rose radius at roseSize 1 (the size you approved)
-  var ROSE_WAKE_PULL=0.022; // rose wake: soft gather (sleep uses 0.015) so the wake glides
-  var ZOOM_MIN=10.5;        // closest zoom: the 5 closest wheel notches (2 units each) removed
-  var BASE_COUNT=10136;     // the original flock. Particles above this are the 'extra'
-                            // density for the rose: always simulated, but faded in only
-                            // while awake, so resting looks exactly as tuned and nothing
-                            // streaks in from off-screen or blinks out on sleep.
+  var ROSE_BASE=13.455;
+  var ROSE_WAKE_PULL=0.022;
+  var ZOOM_MIN=10.5;
+  var BASE_COUNT=10136;
   var RP=null;
-  // REAL VOICE: the brain sends the loudness curve of each line Memphis speaks
-  // (via the Tent: window.__flockVoice(hopMs, [0..99,...]) just as playback starts;
-  // __flockVoice(null) = stopped). The flock plays it back in sync, so he swells on
-  // stressed syllables and settles in pauses. VOICE_LAG covers the sound card's
-  // output delay. Without a curve (older brain) speaking falls back to the old flicker.
-  var VOICE_LAG=90;   // ms
-  // YOUR VOICE: while Memphis listens, the brain sends your mic level ~10x/s
-  // (window.__flockMic(0..99)). The petals ripple and brighten with it.
+  var VOICE_LAG=90;
   var micTarget=0, micLevel=0, micPhase=0, micLast=0;
-  var MIC_FLOW=6;   // how much faster the rose flows at full mic level (x Mic response)
-  var VOICE_FLOW=2; // and, gently, while Memphis himself speaks (x Voice response)
+  var MIC_FLOW=6;
+  var VOICE_FLOW=2;
   var micSlow=0, voiceSlow=0;
-  // AURORA clock: its own time, so it moves even at Master speed 0; Memphis's voice
-  // speeds it up and makes it dance harder (aurAmp)
   var aurPhase=0, aurAmp=1, WOB=0;
-  // ripple pulses: born on each burst of speech, travel centre -> tips
   var PULSES=[], P_FRONT=new Float32Array(8), P_AMP=new Float32Array(8), NPULSE=0;
-  var rLow=0, lastPulse=0, RIP_SPEED=1.2, RIP_START=2;   // petals/second (whole loop ~2.5s); start = where the flow enters the Aura petal
-  var _RX=0,_RY=0,_RZ=0, ripOff=null;   // per-particle ripple offset, applied after the spring
+  var rLow=0, lastPulse=0, RIP_SPEED=1.2, RIP_START=2;
+  var _RX=0,_RY=0,_RZ=0, ripOff=null;
   window.__flockMic=function(v){ micTarget=Math.max(0,Math.min(1,(+v||0)/99)); micLast=performance.now();
     var m=document.getElementById('micMeter'); if(m) m.textContent='Mic: '+Math.round(micTarget*99)+' / 99 (live from the brain)'; };
-  // THE THREE SUITS: while the Evrynthing Writer is open (the Tent calls
-  // __flockSuits(true/false)), each petal takes a suit colour and every particle
-  // changes colour as it passes through the centre into the next petal, so the
-  // flow shows the cycle Magia -> Domina -> Aura -> Magia. The centre stays gold.
   var suitsOn=false, suitsPreview=false, suitsMix=0;
-  var SUITS={magia:'#4FB3E8', domina:'#6FBF4A', aura:'#A77DFF'};   // provisional; set in the forge
+  var SUITS={magia:'#4FB3E8', domina:'#6FBF4A', aura:'#A77DFF'};
   try{ var _sv=window.FLOCK_TUNING.view.suits; ['magia','domina','aura'].forEach(function(k){
     if(_sv&&/^#[0-9a-fA-F]{6}$/.test(_sv[k])) SUITS[k]=_sv[k]; }); }catch(e){}
   var suitCol=[new THREE.Color(),new THREE.Color(),new THREE.Color()];
-  // A near-black suit can't be drawn as light (additive light can only brighten),
-  // so it becomes DARKNESS: those particles stop glowing and are drawn instead as
-  // soft dark smoke in a second, normally-blended layer on top. It eats the light
-  // of anything it passes over and shows as a faint smoky shape against the void.
   var suitDark=[false,false,false];
   function refreshSuits(){ suitCol[0].set(SUITS.magia); suitCol[2].set(SUITS.domina); suitCol[1].set(SUITS.aura);
     for(var k=0;k<3;k++){ var c=suitCol[k]; suitDark[k]=(0.2126*c.r+0.7152*c.g+0.0722*c.b)<0.03; } }
-  refreshSuits();   // petal 0 deg = Magia, 120 = Aura, 240 = Domina (the flow visits 0 -> 240 -> 120)
+  refreshSuits();
   window.__flockSuits=function(on){ suitsOn=!!on; };
   var voiceEnv=null, gotRealVoice=false, voiceLevel=0;
   window.__flockVoice=function(hopMs, env){
@@ -335,37 +280,23 @@
     var f=(performance.now()-voiceEnv.t0)/voiceEnv.hop; if(f<0) return 0;
     var i=Math.floor(f); if(i>=voiceEnv.env.length-1){ if(i>=voiceEnv.env.length) voiceEnv=null; return 0; }
     var a=voiceEnv.env[i], b=voiceEnv.env[i+1]; return (a+(b-a)*(f-i))/99; }
-  // STILL vs SCREENSAVER. By default the rose stands still, face-on, and reads as
-  // a rose (particles still flow along it). After IDLE_MS with no input (mouse,
-  // wheel, keys, touch) and no state change, it eases into screensaver mode:
-  // sway, a slow turn in the screen plane, and the knot's full depth. Any input
-  // eases it back. idleMix: 0 = still, 1 = screensaver.
-  var IDLE_MS=10*1000;   // screensaver after 10s without input
+  var IDLE_MS=10*1000;
   var lastInput=performance.now(), idleMix=0;
-  // DRIFT: a state can also have the screensaver's motion ALWAYS on (thinking does:
-  // a smaller, faster screensaver). motionMix = whichever is stronger.
   var driftMix=0, motionMix=0;
   function touched(){ lastInput=performance.now(); }
   ['pointermove','pointerdown','wheel','keydown','touchstart'].forEach(function(ev){
-    window.addEventListener(ev,touched,{capture:true,passive:true}); });              // rose params for this frame (= the target state)
-  var MAX=60000;        // raised cap so states can use many more particles (denser = less "low-res")
-  var CORE_FRAC=0.0283; // outer sphere down to ~20% of before — a sparse scatter of petals; diamond unchanged
+    window.addEventListener(ev,touched,{capture:true,passive:true}); });
+  var MAX=60000;
+  var CORE_FRAC=0.0283;
   var pos=new Float32Array(MAX*3), col=new Float32Array(MAX*3);
   var seed=new Float32Array(MAX), radius=new Float32Array(MAX), theta=new Float32Array(MAX), phi=new Float32Array(MAX);
-  var isCore=new Uint8Array(MAX);  // 1 = this particle belongs to the core nucleus
+  var isCore=new Uint8Array(MAX);
   for(var i=0;i<MAX;i++){ radius[i]=Math.pow(Math.random(),0.6); theta[i]=Math.random()*6.283;
     phi[i]=Math.acos(2*Math.random()-1); seed[i]=Math.random()*6.283; pos[i*3]=0;pos[i*3+1]=0;pos[i*3+2]=0;
     isCore[i]=(Math.random()<CORE_FRAC)?1:0; }
-  // ---------- GLOW (bloom) + DEPTH FADE ----------
-  // Glow: the frame is rendered to a texture, blurred at 1/2 and 1/4 size, and
-  // added back on top, so bright strands bleed soft light. Off (direct render, no
-  // cost) when the state's Glow is 0. Depth fade: fog that dims far particles so
-  // the knot's over/under reads. Both are per-state forge sliders (Light).
   var glowRT=null, fsCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1), fsScene=new THREE.Scene();
   var fsQuad=new THREE.Mesh(new THREE.PlaneGeometry(2,2)); fsScene.add(fsQuad);
   var VS='varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }';
-  // the first downsample drops anything as dark as the background (thr), so only
-  // the strands glow and the black stays black
   var copyMat=new THREE.ShaderMaterial({uniforms:{tex:{value:null},thr:{value:0}},vertexShader:VS,depthTest:false,depthWrite:false,
     fragmentShader:'uniform sampler2D tex; uniform float thr; varying vec2 vUv; void main(){ vec4 c=texture2D(tex,vUv); gl_FragColor=vec4(max(c.rgb-thr,0.),1.); }'});
   var blurMat=new THREE.ShaderMaterial({uniforms:{tex:{value:null},dir:{value:new THREE.Vector2()}},vertexShader:VS,depthTest:false,depthWrite:false,
@@ -388,9 +319,8 @@
     blurMat.uniforms.tex.value=tmp.texture; blurMat.uniforms.dir.value.set(0,1.5/src.height); pass(blurMat,src); }
   var fog=new THREE.Fog(0x000000,1,2);
   function renderFrame(){
-    // depth fade: linear fog from the rose's near edge to past its far edge
     if(C.depthFade>0.01){ var Rf=ROSE_BASE*(C.roseSize||1); scene.fog=fog;
-      fog.near=Math.max(0.1,cam.position.z-Rf); fog.far=fog.near+1.4*Rf/C.depthFade; }   // at 1: gone by 70% of the depth
+      fog.near=Math.max(0.1,cam.position.z-Rf); fog.far=fog.near+1.4*Rf/C.depthFade; }
     else scene.fog=null;
     darkScene.fog=scene.fog;
     if(!(C.glow>0.01)){ renderer.setRenderTarget(null); renderer.render(scene,cam); drawDark(); return; }
@@ -410,7 +340,6 @@
   var mat=new THREE.PointsMaterial({size:0.1,map:hardTex,transparent:true,depthWrite:false,
     blending:THREE.AdditiveBlending,vertexColors:true,sizeAttenuation:true});
   var points=new THREE.Points(geo,mat); scene.add(points);
-  // darkness layer (see suitDark): same positions, RGBA colours, normal blending
   var darkCol=new Float32Array(MAX*4);
   var dgeo=new THREE.BufferGeometry();
   dgeo.setAttribute('position',geo.attributes.position);
@@ -418,67 +347,42 @@
   var dmat=new THREE.PointsMaterial({size:0.1,map:softTex,transparent:true,depthWrite:false,
     blending:THREE.NormalBlending,vertexColors:true,sizeAttenuation:true});
   var dpoints=new THREE.Points(dgeo,dmat); dpoints.renderOrder=5; dpoints.frustumCulled=false;
-  // 5. the darkness lives in its OWN scene, drawn after everything (after the glow
-  // too), so it eats the halo around it instead of being washed over by it
   var darkScene=new THREE.Scene(); darkScene.add(dpoints);
   var backdrop=new THREE.Sprite(new THREE.SpriteMaterial({map:softTex,transparent:true,depthWrite:false,depthTest:false,
     blending:THREE.AdditiveBlending,opacity:0})); backdrop.renderOrder=-10; backdrop.visible=false; scene.add(backdrop);
   var DARK_ALPHA=0.55, DARK_SIZE=3.2, anyDark=false;
   var baseColor=new THREE.Color(C.color);
-
-  // ---- TRUE COMET TAILS: per-particle position history drawn as fading echo
-  // points in WORLD space. These transform with the camera (zoom moves the
-  // tails too) and leave NO screen burn, because we now clear the frame fully.
-  // Each particle gets HIST echoes of its recent positions, each dimmer + smaller.
-  var HIST=10;                               // tail length in frames
-  var trailPos=new Float32Array(MAX*HIST*3); // ring buffer of past positions
+  var HIST=10;
+  var trailPos=new Float32Array(MAX*HIST*3);
   var trailCol=new Float32Array(MAX*HIST*3);
-  var histHead=0;                            // ring write index
+  var histHead=0;
   var tgeo=new THREE.BufferGeometry();
   tgeo.setAttribute('position',new THREE.BufferAttribute(trailPos,3));
   tgeo.setAttribute('color',new THREE.BufferAttribute(trailCol,3));
   var tmat=new THREE.PointsMaterial({size:0.1,map:softTex,transparent:true,depthWrite:false,
     blending:THREE.AdditiveBlending,vertexColors:true,sizeAttenuation:true});
   var tpoints=new THREE.Points(tgeo,tmat); scene.add(tpoints);
-
   function isRose(s){ return s==='rose'||s==='rivers'||s==='roseknot'; }
   function homeFor(i,ang,shape,spread,height){
     _RX=0; _RY=0; _RZ=0;
     var r=radius[i],hx,hy,hz;
-    // CORE NUCLEUS: a sphere at the centre, present in ALL shapes. Its size
-    // SCALES WITH SPREAD so it's a tight dense heart in the awake diamond
-    // (spread~0.3) but spreads out loose to blend into the galaxy at rest
-    // (spread~1.3) instead of sitting as an odd clump.
-    // The rose family has NO heart: its 'core' particles join the curve, so only
-    // the rose itself is drawn. Disc/diamond/sphere keep the core sphere.
     if(isCore[i] && !isRose(shape)){
-      var cr=Math.pow(r,0.5)*3.2*(0.4+spread*3.0);  // grows a lot as the state spreads
+      var cr=Math.pow(r,0.5)*3.2*(0.4+spread*3.0);
       hx=cr*Math.sin(phi[i])*Math.cos(ang);
       hz=cr*Math.sin(phi[i])*Math.sin(ang);
-      hy=cr*Math.cos(phi[i])*(0.5+height*0.3);      // follow the vertical stretch a bit
+      hy=cr*Math.cos(phi[i])*(0.5+height*0.3);
       return [hx,hy,hz];
     }
     if(shape==='disc'){ var rr=r*16*spread; hx=Math.cos(ang)*rr; hz=Math.sin(ang)*rr;
-      // TALL FIELD: an even vertical spread (u is uniform in -1..1; the old sin()
-      // piled particles onto a top and bottom sheet), thinning gently toward the
-      // rim, so at rest the whole screen is filled. Height = Vertical scale.
       var u=seed[i]/Math.PI-1, rim=rr/(16*spread);
       hy=u*3*height*(1-0.5*rim*rim);
     }else if(shape==='sphere'){ var R=r*13*spread;
       hx=R*Math.sin(phi[i])*Math.cos(ang); hz=R*Math.sin(phi[i])*Math.sin(ang); hy=R*Math.cos(phi[i])*height;
     }else if(isRose(shape)){
-      // THREE-PETALLED ROSE r = cos(3*ang), facing the camera (XY plane).
-      // As ang advances with the orbit, each particle TRAVELS along the curve:
-      // it rushes through the centre and slows at the petal tips (arc speed is
-      // 3x lower there), so tips read denser/brighter. 'fill' sets how far
-      // particles spread inward from the outline (0 = pure line, 1 = full petals).
       var Rr=ROSE_BASE*RP.roseSize;
-      var band=1-RP.fill*Math.pow(1-r,1.5);          // most particles near the outline
+      var band=1-RP.fill*Math.pow(1-r,1.5);
       if(shape==='rivers'){
-        // THREE RIVERS: each particle keeps to ONE petal (i%3) and circles it as
-        // a closed loop; each petal is pushed outward by 'gap' so the three
-        // never touch at the centre.
-        var k=i%3, th=((ang%1.0472)+1.0472)%1.0472-0.5236;   // local angle in one petal
+        var k=i%3, th=((ang%1.0472)+1.0472)%1.0472-0.5236;
         var pr=Rr*Math.cos(3*th)*band;
         var lx=pr*Math.cos(th)+Rr*RP.gap, ly=pr*Math.sin(th);
         var ka=k*2.0944, ck=Math.cos(ka), sk=Math.sin(ka);
@@ -487,19 +391,7 @@
       }else{
         var rr2=Rr*Math.cos(3*ang)*band;
         hx=rr2*Math.cos(ang); hy=rr2*Math.sin(ang);
-        hz=Math.cos(phi[i])*Rr*RP.thick;              // thin depth so it isn't paper-flat
-        // AURORA (all smooth, low-frequency, travelling along the ribbon — never
-        // per-particle noise, which is what read as "water spouting"):
-        //  twist  = the ribbon's cross-section turns over slowly along its length
-        //  wobble = curtain-like waves sway the ribbon in depth and gently in/out
-        // RIPPLE (RG ribbon): each burst of speech sends a smooth wave along the
-        // WHOLE ribbon in the direction of flow: it starts at the crossing where the
-        // flow enters the Aura petal (Writer mode: where white meets gold), runs
-        // through all three petals and ends back where it started.
-        // sL = position along the loop in petals (0..3); twin-safe (ang+PI -> +3).
-        // TRAVELLING TWIST: the same waves also carry a short stretch where the
-        // ribbon rotates around its own centreline (up to a full flip), moving along
-        // the flow. twp = twist angle as a fraction of PI.
+        hz=Math.cos(phi[i])*Rr*RP.thick;
         var rip=0, twp=0; _RX=0; _RY=0; _RZ=0;
         if(NPULSE>0 && (RP.ripple>0.001 || RP.twistPulse>0.001)){ var u6r=(ang+0.5236)/1.0472, sL=((u6r%3)+3)%3;
           for(var q=0;q<NPULSE;q++){ var x=sL-P_FRONT[q]; x=((x+1.5)%3+3)%3-1.5;
@@ -508,38 +400,22 @@
           rip*=(RP.ripple||0); twp*=(RP.twistPulse||0); }
         if(RP.twist>0.001 || WOB>0.001 || rip!==0 || twp!==0){
           var Or=Rr*Math.cos(3*ang), dl=rr2-Or, z0=hz;
-          // capped below a quarter-turn (0.42*PI): past that the band goes edge-on,
-          // which from the screensaver's angle reads as tears and gaps in the ribbon
           if(RP.twist>0.001){ var tau=Math.max(-1.32,Math.min(1.32,RP.twist*Math.PI*Math.min(1.4,aurAmp)*Math.sin(2*ang+aurPhase)));
-            // rotate in REAL space: dl is signed with cos(3*ang), which flips between the
-            // rose's two traces, so convert to the physical outward offset (sg) first
             var sg=Or>=0?1:-1, dp=dl*sg, ct=Math.cos(tau), st=Math.sin(tau);
             var dp2=dp*ct-z0*st; z0=dp*st+z0*ct; dl=dp2*sg; }
           var rw=1;
-          // NOTE: a 3-petal rose is traced TWICE per turn (ang and ang+PI land on the
-          // same point), so every wave here uses an EVEN multiple of ang — an odd one
-          // pushes the two copies apart and you see two roses.
           if(WOB>0.001){ var wv=Math.sin(2*ang-0.8*aurPhase)+0.5*Math.sin(6*ang+1.3*aurPhase);
             z0+=WOB*Rr*0.10*wv; rw=1+WOB*0.06*Math.sin(4*ang-aurPhase*0.7); }
-          // sideways sway: the petals bend left/right like curtains (visible face-on)
           var da=(WOB>0.001)? WOB*0.09*Math.sin(4*ang+0.9*aurPhase) : 0;
           var r3=(Or+dl)*rw; hx=r3*Math.cos(ang+da); hy=r3*Math.sin(ang+da); hz=z0;
-          // the ripple is too quick for the particles' soft spring to follow, so it is
-          // returned as an OFFSET (_RX/_RY/_RZ) that the loop adds straight onto the
-          // drawn position, bypassing the spring
           if(rip!==0 || twp!==0){
             var dl1=dl, z1=z0;
-            if(twp!==0){   // rotate around the band's centreline, in real space (twin-safe)
+            if(twp!==0){
               var sg1=Or>=0?1:-1, cB=-Math.abs(Or)*(RP.fill||0.3)*0.25, tw=twp*Math.PI;
               var dp1=dl*sg1-cB, ct1=Math.cos(tw), st1=Math.sin(tw);
               var dpr=dp1*ct1-z0*st1; z1=dp1*st1+z0*ct1; dl1=(dpr+cB)*sg1; }
             var da1=da+rip*0.07, r31=(Or+dl1)*rw*(1+rip*0.03);
             _RX=r31*Math.cos(ang+da1)-hx; _RY=r31*Math.sin(ang+da1)-hy; _RZ=(z1-z0)+rip*Rr*0.05; } }
-        // ROSE KNOT: the same single curve, but z = sin(2*ang) puts its three passes
-        // through the centre at three different depths (+, 0, -). One river, three
-        // petals, one centre, and the strands pass over/under instead of colliding.
-        // depth is partial when still (a face-on rose; full depth there only adds
-        // perspective distortion) and full in screensaver mode, where it shows.
         if(shape==='roseknot'){ hz+=Math.sin(2*ang)*Rr*RP.knot*lerp(RP.knotStill,1,motionMix); }
       }
     }else{ var R2=(0.35+0.65*r)*13*spread;
@@ -548,16 +424,10 @@
       hx=(sx/L1)*R2; hy=(sy/L1)*R2*1.25; hz=(sz/L1)*R2; }
     return [hx,hy,hz];
   }
-
-  // ---------- CAMERA / VIEW ----------
-  // The view orientation is a quaternion (qUser), turned about the SCREEN's axes:
-  // horizontal drags spin around the vertical axis, vertical drags around the
-  // horizontal one, in any orientation and endlessly in both directions (the old
-  // angle pair had to stop at the poles to avoid flipping).
   var dragging=false,px,py,autoRot=0;
   var AX_X=new THREE.Vector3(1,0,0), AX_Y=new THREE.Vector3(0,1,0), _qt=new THREE.Quaternion();
-  var Q_DEFAULT=new THREE.Quaternion().setFromAxisAngle(AX_X,0.25);   // the default slight tilt
-  var HOME_Z=null;   // default view's zoom, if you've set one (forge: Camera > Set as default view)
+  var Q_DEFAULT=new THREE.Quaternion().setFromAxisAngle(AX_X,0.25);
+  var HOME_Z=null;
   try{ var _h=window.FLOCK_TUNING.view.home;
     if(_h&&Array.isArray(_h.q)&&_h.q.length===4&&_h.q.every(isFinite)&&+_h.z>=ZOOM_MIN&&+_h.z<=100){
       Q_DEFAULT.fromArray(_h.q.map(Number)).normalize(); HOME_Z=+_h.z; } }catch(e){}
@@ -568,11 +438,6 @@
     qUser.normalize(); }
   var cv=renderer.domElement;
   cv.addEventListener('pointerdown',function(e){ if(e.button!==0) return; dragging=true;px=e.clientX;py=e.clientY;});
-
-  // SAVED VIEWS. Right-click: if you've moved the camera, glide back to the
-  // default view; if you're sitting on a saved view, glide to the NEXT one
-  // (default -> 1 -> 2 -> 3 -> default...). Empty slots are skipped. Views are
-  // stored in the forge (Camera > Store 1/2/3) and kept by "Save as defaults".
   function defaultZoom(){ if(HOME_Z) return HOME_Z; try{ var z=+window.FLOCK_TUNING.view.startZoom; if(z>=ZOOM_MIN&&z<=100) return z; }catch(e){} return 30.5; }
   var presets=[null,null,null];
   try{ var _ps=window.FLOCK_TUNING.view.presets;
@@ -582,7 +447,7 @@
   function viewList(){ var L=[{q:Q_DEFAULT,z:defaultZoom(),name:'view 1 (default)',slot:0}];
     presets.forEach(function(p,i){ if(p) L.push({q:new THREE.Quaternion().fromArray(p.q),z:p.z,name:'view '+(i+2),slot:i+1}); });
     return L; }
-  var atView=0;          // index in viewList() we're sitting on; -1 = moved since
+  var atView=0;
   function moved(){ atView=-1; }
   var camReset=null;
   function goToView(idx){ var L=viewList(); idx=((idx%L.length)+L.length)%L.length; var v=L[idx];
@@ -591,12 +456,10 @@
     var lab=document.getElementById('viewLabel'); if(lab) lab.textContent='Now: '+v.name; }
   cv.addEventListener('contextmenu',function(e){ e.preventDefault();
     goToView(atView<0 ? 0 : atView+1); });
-  function stepCamReset(){ if(!camReset) return; var tt=Math.min(1,(performance.now()-camReset.t0)/900);   // 0.9s, real time
+  function stepCamReset(){ if(!camReset) return; var tt=Math.min(1,(performance.now()-camReset.t0)/900);
     var e=ease(tt);
     cam.position.z=lerp(camReset.z0,camReset.z1,e); qUser.copy(camReset.q0).slerp(camReset.q1,e);
     if(tt>=1){ if(camReset.slot!=null && !thumbs[camReset.slot]) pendingThumb=camReset.slot; camReset=null; } }
-  // The four views as SLOTS: slot 0 = the default (home), slots 1-3 = the saved
-  // views. thumbs[] are small previews so you can tell them apart in the forge.
   var thumbs=[null,null,null,null];
   try{ var _th=window.FLOCK_TUNING.view.thumbs; if(Array.isArray(_th)) for(var _j=0;_j<4;_j++){
     if(typeof _th[_j]==='string' && _th[_j].indexOf('data:image/jpeg;base64,')===0 && _th[_j].length<40000) thumbs[_j]=_th[_j]; } }catch(e){}
@@ -606,13 +469,13 @@
   function captureThumb(){ try{ var src=renderer.domElement, c=document.createElement('canvas');
       c.width=144; c.height=Math.max(1,Math.round(144*src.height/src.width));
       c.getContext('2d').drawImage(src,0,0,c.width,c.height); return c.toDataURL('image/jpeg',0.7); }catch(e){ return null; } }
-  var pendingThumb=-1;   // slot to photograph on the next rendered frame
+  var pendingThumb=-1;
   window.__flockStoreSlot=function(k){ var sl=getSlots(); sl[k]={q:qUser.toArray(),z:Math.round(cam.position.z*2)/2}; setSlots(sl);
     atView=-1; pendingThumb=k; };
   window.__flockClearSlot=function(k){ if(k<1) return; presets[k-1]=null; thumbs[k]=null; if(window.__flockViewsChanged) window.__flockViewsChanged(); };
   window.__flockMoveSlot=function(from,to){ if(from===to) return true; var sl=getSlots();
     var order=[0,1,2,3]; var it=order.splice(from,1)[0]; order.splice(to,0,it);
-    if(!sl[order[0]]) return false;                        // the default slot can't be empty
+    if(!sl[order[0]]) return false;
     setSlots(order.map(function(o){ return sl[o]; })); thumbs=order.map(function(o){ return thumbs[o]; });
     atView=-1; return true; };
   window.__flockGoSlot=function(k){ var sl=getSlots(); if(!sl[k]) return;
@@ -621,25 +484,16 @@
   window.__flockThumbs=function(){ return thumbs.slice(); };
   window.__flockHome=function(){ return {q:Q_DEFAULT.toArray(),z:defaultZoom()}; };
   window.__flockViews=function(){ return presets.map(function(p){ return p?{q:p.q.slice(),z:p.z}:null; }); };
-
-  // DRAG WITH INERTIA: the drag's speed is measured while you move; on release the
-  // view keeps turning at that speed, slows down, and settles into an endless
-  // gentle cruise (VFLOOR, or the throw's own speed if slower) until you catch it
-  // (press and release without swiping) or right-click.
   var GLIDE=0.996, velX=0, velY=0, lastMoveT=0, moveGap=16;
   var VFLOOR=0.002, floorMag=0;
-  // timings use the EVENT's own timestamp, not when the handler ran: if a frame
-  // is slow, handlers run late and a real throw would look like a hold.
   window.addEventListener('pointerup',function(e){ if(!dragging) return; dragging=false;
-    // "held still" = no movement for 70ms, or 2.5x the recent gap between move
-    // events if the machine is delivering them slowly (a stutter isn't a hold)
     if(e.timeStamp-lastMoveT>Math.max(70,2.5*moveGap)){ velX=0; velY=0; }
     floorMag=Math.min(Math.hypot(velX,velY), VFLOOR); });
   window.addEventListener('pointermove',function(e){if(!dragging)return;
     var now=e.timeStamp, dt=Math.max(1,now-(lastMoveT||now-16)); moveGap=moveGap*0.6+dt*0.4;
     var dy=(e.clientX-px)*0.005, dx=(e.clientY-py)*0.005;
     turnView(dy,dx); px=e.clientX;py=e.clientY; if(dx||dy) moved();
-    var k=Math.min(1,16/dt);   // velocity in radians per 16ms frame, smoothed
+    var k=Math.min(1,16/dt);
     velY=velY*0.5+dy*k*0.5; velX=velX*0.5+dx*k*0.5; lastMoveT=now; });
   cv.addEventListener('pointerdown',function(e){ if(e.button===0){ velX=0; velY=0; lastMoveT=e.timeStamp; moveGap=16; } });
   function stepInertia(){ if(dragging) return;
@@ -649,87 +503,57 @@
     var m=Math.hypot(velX,velY), m2=Math.max(m*GLIDE, Math.min(m,floorMag));
     if(m>0){ velX*=m2/m; velY*=m2/m; } }
   cv.addEventListener('wheel',function(e){e.preventDefault();window.__zoomTouched=true;moved();cam.position.z=Math.max(ZOOM_MIN,Math.min(100,cam.position.z+e.deltaY*0.02));},{passive:false});
-
   var extraMix=0, swayNow=0, swayPhase=0;
   var _eAnim=new THREE.Euler(0,0,0,'XYZ'), _qAnim=new THREE.Quaternion();
   var t=0, spinPhase=0, voiceSim=0, roseMix=0, roseTurn=0, flowNow=1, rosePullMix=0;
-  // personality state
   var hueDrift=0, breathPhase=0, ripple=0, rippleSeed=0;
   function lerp(a,b,f){return a+(b-a)*f;}
   function clamp01(v){return v<0?0:v>1?1:v;}
-  function ease(x){ x=clamp01(x); return x*x*(3-2*x); } // smoothstep
-
-  // ---- staggered state transition ----
-  // Each parameter wakes up on its own window of a single 0->1 transition clock,
-  // so the flock reorganizes its FORM first, then swirls, then blooms its trails,
-  // then settles its colour. End states are untouched — only the journey changes.
-  var TRANS_DUR=2.6;        // one unified morph; slightly quicker since phases now overlap into a single motion
-  var trans=1;              // 1 = settled; <1 = morphing (RAW linear clock)
-  var wake=1;               // the SHAPED clock the look reads from (0..1)
+  function ease(x){ x=clamp01(x); return x*x*(3-2*x); }
+  var TRANS_DUR=2.6;
+  var trans=1;
+  var wake=1;
   var fromState={}, fromColor=new THREE.Color();
-  var transDur=TRANS_DUR, burstDir=1, timeJit=0; // per-wake random variation
-  var settleT=1;  // arrival-window clock after a morph ends (0->1 over ~0.5s)
-  // per-parameter [start, end] fractions of the (shaped) transition clock
+  var transDur=TRANS_DUR, burstDir=1, timeJit=0;
+  var settleT=1;
   var SCHED={
-    // ONE unified motion: every parameter resolves across (almost) the whole
-    // transition with only gentle offsets, so form + light + colour move
-    // TOGETHER instead of as two distinct beats (gather, then bloom). This
-    // removes the "two transitions" seam at deep zoom.
     shape:[0.0,0.45], spread:[0.0,0.85], height:[0.0,0.9], count:[0.0,0.4],
     pull:[0.0,0.7], flow:[0.0,0.001], life:[0.05,0.9], swirl:[0.05,0.85],
     tempo:[0.0,0.85], spin:[0.05,0.9],
     trail:[0.1,0.95], size:[0.0,0.85], soft:[0.0,0.85],
     sat:[0.05,0.95], bri:[0.1,1.0]
   };
-  // Wake curve: slow reluctant start, a hitch near the threshold (~0.6),
-  // then a decisive surge to full wake. Not symmetric — energy arrives late.
   function wakeCurve(x){
     x=clamp01(x);
-    // mostly-linear with a touch of ease at both ends, so the gather is visible
-    // across the WHOLE duration (not crammed into a late surge that blinks when
-    // you're zoomed deep in). Blend 70% linear + 30% smoothstep.
     var e=0.7*x + 0.3*(x*x*(3-2*x));
-    // hesitation: a small dip centred on ~0.6 so it eases off near the
-    // threshold without stopping, then recovers and surges on.
     var hitch=Math.exp(-Math.pow((x-0.6)/0.1,2))*0.08;
     return clamp01(e - hitch);
   }
   function startTransition(toState){
     var from=curState;
-    touched();   // Memphis waking/talking ends the screensaver too
-    // The slow staggered "wake" plays ONLY when leaving resting (waking up).
-    // Switches among the awake states (listening/thinking/speaking) are
-    // live reactions, so they snap instantly.
+    touched();
     if(from!=='resting'){
       var tg=getTarget(toState);
-      for(var k in tg){ if(typeof tg[k]==='number') C[k]=tg[k]; } // jump params
-      baseColor.set(tg.color);                                    // jump colour
-      trans=1; wake=1;                                            // no morph
+      for(var k in tg){ if(typeof tg[k]==='number') C[k]=tg[k]; }
+      baseColor.set(tg.color);
+      trans=1; wake=1;
       return;
     }
     for(var k2 in C){ if(typeof C[k2]==='number') fromState[k2]=C[k2]; }
-    fromState._shape=getTarget(from).shape; // the shape we are leaving
+    fromState._shape=getTarget(from).shape;
     fromColor.copy(baseColor);
-    // organic variation — no two wakes identical
     transDur=TRANS_DUR*(0.85+Math.random()*0.4);
     burstDir=Math.random()<0.5?-1:1;
     timeJit=(Math.random()-0.5)*0.12;
     trans=0; wake=0;
-    swayPhase=0;   // sway restarts from face-on
-    // The idle vertical turn (autoRot) is invisible on the disc (it looks the same
-    // from every side), so zero it NOW, while still a disc. Fading it out during
-    // the wake swung the knot through up to 180 degrees, showing its near and far
-    // halves as two overlapping knots.
+    swayPhase=0;
     autoRot=0;
-    // flow does nothing at rest, so set it straight to the target: easing it down
-    // from resting's 1.0 while the orbit speeds up made a fast whirl mid-wake.
     var _tt=getTarget(toState); if(_tt.flow!=null){ C.flow=_tt.flow; flowNow=C.flow; }
   }
   function pseg(key){ var s=SCHED[key]||[0,1]; var j=timeJit;
     return ease((wake-(s[0]+j*s[0]))/((s[1]-s[0]))); }
-
   function animate(){
-    requestAnimationFrame(animate); if(window.__flockPaused) return;   /* phone: paused while the Hearth room is out of view */
+    requestAnimationFrame(animate); if(window.__flockPaused) return;
     var writerOn = suitsOn||suitsPreview;
     profMix += ((writerOn?1:0)-profMix)*0.03;
     var tgt=getTarget(curState);
@@ -737,75 +561,44 @@
     stepCamReset(); stepInertia();
     if(trans<1){
       trans=Math.min(1, trans + 0.016/transDur);
-      wake=wakeCurve(trans);             // shaped: slow start, hitch, late surge
+      wake=wakeCurve(trans);
       for(var k in tgt){ if(typeof tgt[k]==='number'){ C[k]=lerp(fromState[k], tgt[k], pseg(k)); } }
       baseColor.copy(fromColor).lerp(new THREE.Color(tgt.color), pseg('sat'));
     } else {
-      // Morph clock done: SNAP params exactly to target. (Lerping the last bit
-      // here at 0.08 was what kept the home position tightening for ~1.5s after
-      // the morph "ended" — the real cause of the crawl, not the particle pull.)
       for(var k2 in tgt){ if(typeof tgt[k2]==='number'){ C[k2]=tgt[k2]; } }
       baseColor.set(tgt.color);
     }
-
-    // ---------- PERSONALITY ----------
-    // 1) WANDERING COLOUR: the hue drifts slowly within a small range so Memphis
-    //    is never exactly the same twice. Only once settled (don't fight the morph).
     if(trans>=1 && curState!=='resting'){
-      hueDrift += (Math.random()-0.5)*0.0006;          // slow random walk
-      hueDrift = Math.max(-0.035, Math.min(0.035, hueDrift)); // bounded ±range
+      hueDrift += (Math.random()-0.5)*0.0006;
+      hueDrift = Math.max(-0.035, Math.min(0.035, hueDrift));
       var hsl={}; baseColor.getHSL(hsl);
       baseColor.setHSL((hsl.h+hueDrift+1)%1, hsl.s, hsl.l);
     }
     var awake = (curState !== 'resting');
-    // 2) IDLE BREATHING: a slow organic in/out of the outer sphere — awake only.
-    //    Resting is fully still (no breathing, ripple, flux, or colour drift).
     breathPhase += 0.016 * 0.5;
     var breath = awake ? (Math.sin(breathPhase) * 0.06 + Math.sin(breathPhase*0.37+1.3) * 0.03) : 0;
-    // 3) RESTLESS MICRO-REACTIONS: a gentle ripple, rarely — awake only.
     if(awake && ripple <= 0 && Math.random() < 0.002){ ripple = 1; rippleSeed = Math.random()*6.283; }
     if(ripple > 0){ ripple -= 0.02; }
-    // transient swirl burst: peaks mid-morph, decays to zero. burstDir flips
-    // the swirl direction each wake so no two look the same.
     var burst = trans<1 ? Math.sin(wake*Math.PI)*0.9*burstDir : 0;
-    // EXPAND-AND-SNAP flare: a sharp spike near wake~0.8 (as the diamond
-    // resolves) — the flock flares outward + brighter (the inhale), then the
-    // boosted pull snaps it crisply into the tight form. Zero once settled.
-    var flare=0; // (bloom/flash effect removed)
-    // keep the OLD shape until the form has begun reorganizing, then flip to the
-    // new one mid-swirl so the swap reads as reorganization, not a jump.
-    // Rose family: switch the target at once, like going to sleep does, so the wake
-    // is one long glide from disc to rose rather than a mid-morph jump.
+    var flare=0;
     var shape = (trans<1 && wake<0.3 && fromState._shape && !isRose(tgt.shape)) ? fromState._shape : tgt.shape;
-
-    // decouple: a steady base clock + separate spin phase that honours orbit directly
     t += 0.016 * Math.max(0.04, C.tempo);
-    // flowNow eases toward the state's flow, so snapping between awake states
-    // (listening <-> thinking) speeds up / slows down over ~1s instead of jumping.
     flowNow += (C.flow - flowNow) * 0.02;
-    // while you talk (mic level), the rose flows faster: up to (1+MIC_FLOW*micResponse)x
-    // a SLOW copy of the mic level drives the speed, so talking makes the flow swell
-    // and settle smoothly instead of lurching with every syllable
     micSlow += (micLevel-micSlow)*(micLevel>micSlow?0.04:0.02);
-    // drive = how much someone is talking right now: you (mic) or Memphis (voice)
     var drive = (curState!=='resting') ? micSlow*(C.micGain!=null?C.micGain:1) + voiceSlow*(C.voiceGain!=null?C.voiceGain:0.6) : 0;
     aurAmp = 1 + (C.react||0)*drive;
-    WOB = Math.min(0.75, (C.wobble||0) + (C.react||0)*drive*0.6);   // wobble appears/grows with talking (capped: too much tears the ribbon)
-    // spawn a ripple on each burst: the fast level jumps well above its recent low
+    WOB = Math.min(0.75, (C.wobble||0) + (C.react||0)*drive*0.6);
     var nowR=performance.now();
-    // raw (unsmoothed) levels: sharp syllable edges, independent of frame rate
     var rawDrive=(curState!=='resting') ? micTarget*(C.micGain!=null?C.micGain:1) + voiceTarget()*(C.voiceGain!=null?C.voiceGain:0.6) : 0;
     var dtR=Math.min(0.1,(nowR-(window.__rLast||nowR))/1000); window.__rLast=nowR;
     rLow=Math.min(rawDrive, rLow+0.7*dtR);
-    var anyPulseFx=(C.ripple||0)+(C.twistPulse||0)+(C.streak||0) > 0.001;   // wobble, twist or streak
-    // more waves: a smaller rise counts (syllables, not just words), up to every 0.16s
+    var anyPulseFx=(C.ripple||0)+(C.twistPulse||0)+(C.streak||0) > 0.001;
     if(anyPulseFx && rawDrive-rLow>0.12 && nowR-lastPulse>160){
       PULSES.push({t0:nowR, s:Math.min(1,rawDrive)}); lastPulse=nowR; rLow=rawDrive; if(PULSES.length>8) PULSES.shift(); }
     NPULSE=0;
-    var LOOP_T=3/RIP_SPEED;   // seconds for one full loop
+    var LOOP_T=3/RIP_SPEED;
     for(var pq=PULSES.length-1;pq>=0;pq--){ var ag=(nowR-PULSES[pq].t0)/1000;
       if(ag>LOOP_T){ PULSES.splice(pq,1); continue; }
-      // eases IN over 0.25s (no pop), fades gently, and OUT over the last 15% of the loop
       var env=ease(ag/0.25)*Math.exp(-ag/2.2)*(1-ease((ag-LOOP_T*0.85)/(LOOP_T*0.15)));
       P_FRONT[NPULSE]=(RIP_START+ag*RIP_SPEED)%3; P_AMP[NPULSE]=PULSES[pq].s*env; NPULSE++; }
     aurPhase += 0.016*(C.aurSpeed!=null?C.aurSpeed:0.5)*(0.6+0.4*aurAmp);
@@ -814,30 +607,22 @@
                      + VOICE_FLOW*voiceSlow*(C.voiceGain!=null?C.voiceGain:0.6)*(curState!=='resting'?1:0);
     var spinStep = 0.016 * C.spin * Math.max(0.08, C.tempo) * 0.5 * lerp(1, flowNow, roseMix) * micBoost;
     spinPhase += spinStep;
-    // A rose is flat, so turning it around the vertical axis (like the diamond)
-    // would show it edge-on as a line. While the rose is up, the vertical turn
-    // eases to face-on and the rose turns slowly IN the screen plane instead.
     roseMix += ((isRose(shape)?1:0) - roseMix) * 0.012;
-    extraMix = 1;   // all particles visible in every state now (the sleep field wants the density)
-    swayNow += ((tgt.sway||0) - swayNow) * 0.02;   // eased so a state change never jerks the view
-    // SWAY has its OWN clock (one slow swing per ~40s), independent of Master
-    // speed: tied to the main clock, tempo 0 froze it at a random tilt per wake.
-    swayPhase += 0.016 * 6.2832/40 * (C.driftSpeed||1);   // faster in states with a quicker screensaver (thinking)
+    extraMix = 1;
+    swayNow += ((tgt.sway||0) - swayNow) * 0.02;
+    swayPhase += 0.016 * 6.2832/40 * (C.driftSpeed||1);
     autoRot += 0.0008 * C.spin * Math.max(0.08,C.tempo) * (1-roseMix);
     if(autoRot>Math.PI) autoRot-=2*Math.PI; else if(autoRot<-Math.PI) autoRot+=2*Math.PI;
     var idle = (performance.now()-lastInput) > IDLE_MS && !document.body.classList.contains('tune');
-    idleMix += ((idle?1:0) - idleMix) * (idle ? 0.005 : 0.09);   // ~6s in, ~0.5s back
+    idleMix += ((idle?1:0) - idleMix) * (idle ? 0.005 : 0.09);
     driftMix += ((C.drift||0) - driftMix) * 0.05;
     motionMix = Math.max(idleMix, driftMix);
     var driftSpd = C.driftSpeed||1;
-    if(motionMix<0.001){ roseTurn=0; }                            // still = upright rose
+    if(motionMix<0.001){ roseTurn=0; }
     roseTurn += 0.00025 * C.spin * Math.max(0.08,C.tempo) * roseMix * motionMix * driftSpd;
-
     var vAmp=0;
-    // real voice: any awake state (cover lines play while he's still thinking);
-    // fast attack, softer release so syllables read as pulses, not flicker.
-    var vt=voiceTarget(); voiceLevel += (vt-voiceLevel)*(vt>voiceLevel?0.2:0.05);   // sustained, not spiky
-    if(performance.now()-micLast>400) micTarget=0;          // brain stopped sending = quiet
+    var vt=voiceTarget(); voiceLevel += (vt-voiceLevel)*(vt>voiceLevel?0.2:0.05);
+    if(performance.now()-micLast>400) micTarget=0;
     micLevel += (micTarget-micLevel)*(micTarget>micLevel?0.35:0.08);
     micPhase += 0.016*5;
     var micAmp = awake ? micLevel*(C.micGain!=null?C.micGain:1) : 0;
@@ -849,75 +634,36 @@
       else if(!gotRealVoice){ voiceSim+=((Math.random()<0.05?Math.random():voiceSim*0.9)-voiceSim)*0.25;
         vAmp=Math.max(0,voiceSim*(0.6+0.4*Math.sin(t*9))); }
     }
-
-    // softness: swap sprite + scale size/opacity. hard=tiny crisp, soft=bigger glow
     mat.map = C.soft<0.5 ? hardTex : softTex;
     var sizeMul = 1 + C.soft*1.4;
     mat.size = C.size * sizeMul * (1+vAmp*0.3);
-    mat.opacity = Math.min(1, (0.55 - C.soft*0.2) * C.bri);  // dimmer per-particle so 16000 don't additive-wash the centre bright
-
+    mat.opacity = Math.min(1, (0.55 - C.soft*0.2) * C.bri);
     var life=C.life, swirl=C.swirl+burst;
-    // SETTLE FIX: the morph clock can finish before particles have physically
-    // arrived (listening's pull is 0.005 — a slow crawl). So we hold a high pull
-    // through the morph AND for a brief arrival window right after it, then ease
-    // down to the state's own slow pull once the flock is already in place. No
-    // more 1-2s drift after the animation "ends".
-    // SETTLE FIX v2 (measured): at pull 0.005 the flock crawls from blob to
-    // diamond for ~1.5s AFTER the morph clock ends. The home position also keeps
-    // moving until late in the morph, so particles lag it. Fix: hold a STRONG
-    // pull (0.2) for the whole morph and a full arrival window after, so they
-    // track the moving target and lock into the final shape before the morph
-    // ends; then ease to the state's own slow pull over ~1s once already home.
     if(trans<1){ settleT=0; }
-    else if(settleT<1){ settleT=Math.min(1, settleT+0.016/0.6); } // 0.6s ease-down to tuned pull
-    // Hold a firm pull through the morph so the shape tracks tightly, then relax
-    // to the state's own pull (now 0.05 for listening, up from 0.005 — the slow
-    // 0.005 equilibrium was the real cause of the ~2s width-shrink crawl).
-    // GENTLE morph pull so the forward transition FLOWS like the (perfect)
-    // reverse one, instead of snapping in with a hard pull. The reverse looked
-    // great because it eased out at resting's soft pull; we now ease IN the same
-    // way. Low enough to be smooth, high enough to avoid a post-morph crawl.
-    // Rose wake: a soft pull like sleep's, so particles GLIDE onto the rose.
+    else if(settleT<1){ settleT=Math.min(1, settleT+0.016/0.6); }
     var STRONG = isRose(tgt.shape) ? ROSE_WAKE_PULL : 0.06;
     var movePull;
     if(trans<1){ movePull=Math.max(C.pull, STRONG); }
     else { movePull = lerp(STRONG, C.pull, ease(settleT)); }
-    // ROSE GATHER: just enough pull to hold the petals at the CURRENT flow speed
-    // (the petal detail moves at ~4x the orbit rate; pull = 4x that keeps ~97%).
-    // Engaged only once the morph has finished, and eased in over ~1.5s, so the
-    // wake flows in at the normal gentle pull and the rose sharpens at the end.
-    // Released at once when the shape leaves the rose, so sleep isn't yanked.
     var rosePull = Math.min(0.25, 16 * spinStep * 1.1);
     if(isRose(shape) && trans>=1){ rosePullMix = Math.min(1, rosePullMix + 0.016/1.5); }
     else { rosePullMix = 0; }
     movePull = lerp(movePull, Math.max(movePull, rosePull), ease(rosePullMix));
-    var expand = 1;   // (swell removed with bloom)
+    var expand = 1;
     for(var i=0;i<C.count;i++){
       var ang=theta[i] + spinPhase*(0.6+radius[i]*0.5);
-      // the rose is built at its FINAL size from the first frame of the wake
-      // (a mid-morph spread would make it balloon to ~4x and then shrink).
       var h=homeFor(i,ang,shape,isRose(shape)?tgt.spread:C.spread,C.height);
-      var hx0=h[0], hy0=h[1];   // un-swollen home, for the suit colour
+      var hx0=h[0], hy0=h[1];
       var hx=h[0]*expand,hy=h[1]*expand,hz=h[2]*expand;
-      // TERMINOLOGY (corrected): isCore[i] = the OUTER SPHERE ("shell" to you —
-      // the containment shield). !isCore = the DIAMOND (the defined inner form).
-      // The SPHERE breathes, fluxes and stirs; the DIAMOND stays crisp & defined.
-      var sphere = isCore[i] && !isRose(shape);   // outer sphere = the living, flowing part (none in the rose)
-      // sphere gets full life/swirl; diamond much less; the rose by its own
-      // 'roseTurb', scaled with its size so the blur stays proportional.
+      var sphere = isCore[i] && !isRose(shape);
       var mo = sphere ? 1.0 : (isRose(shape) ? 0.35*3*RP.roseSize*RP.roseTurb : 0.35);
-      // breathing/ripple/flux all weight to the SPHERE now.
       var shellW = sphere ? 1.0 : 0.12;
       var bscale = 1 + breath*shellW;
       if(ripple>0 && sphere){
-        // gentle swell travelling through the outer sphere.
         var rp = Math.sin(ripple*3.14 - radius[i]*3.5 + rippleSeed) * ripple * 0.18 * shellW;
         bscale += rp;
       }
       hx*=bscale; hy*=bscale; hz*=bscale;
-      // PETALS-IN-A-BREEZE flux (outer sphere, awake states only): slow, large,
-      // graceful drift on long lazy currents — NOT a fast jittery swarm. Bigger
-      // amplitude but much slower frequency = petals, not bees. Off at rest.
       if(sphere && awake){
         var fx = seed[i]*1.7;
         hx += Math.sin(t*0.22 + hy*0.18 + fx) * 1.0;
@@ -926,21 +672,15 @@
       }
       var lifeI=life*mo, swirlI=swirl*mo;
       if(lifeI>0.001){ var ph=seed[i]; var fa=Math.sin(t*1.1+radius[i]*0.6+ph)*1.2*lifeI;
-        // on the rose the current's direction uses 2*ang (same twin-copy reason)
         var ca=isRose(shape)?2*ang:ang;
         hx+=Math.cos(ca+fa)*1.2*lifeI+Math.sin(t*2+ph)*0.5*lifeI;
         hz+=Math.sin(ca+fa)*1.2*lifeI+Math.cos(t*1.7+ph*1.3)*0.5*lifeI;
         hy+=Math.sin(t*1.9+ph*2)*1.0*lifeI; }
       if(swirlI>0.001){ hx+=Math.sin(t*0.9+seed[i]+radius[i]*4)*swirlI; hz+=Math.cos(t*0.8+seed[i]+radius[i]*4)*swirlI; hy+=Math.sin(t*1.3+seed[i])*swirlI*0.5; }
-      // his voice: one smooth, even swell of the whole rose (the old per-particle,
-      // fast-oscillating swell read as explosive)
-      if(vAmp>0.001){ var vr=1+vAmp*0.04; hx*=vr;hy*=vr;hz*=vr; }   // tiny: the aurora carries his voice now
-      // your voice: a ripple travelling along the petals, size set by your mic level
-      // (no ripple: the travelling wobble read as goofy; your voice now shows as a
-      // smooth speed-up of the flow plus a soft brightening)
+      if(vAmp>0.001){ var vr=1+vAmp*0.04; hx*=vr;hy*=vr;hz*=vr; }
       if(!ripOff) ripOff=new Float32Array(MAX*3);
       var o3=i*3, ox=ripOff[o3], oy=ripOff[o3+1], oz=ripOff[o3+2];
-      if(ox!==0||oy!==0||oz!==0){ pos[o3]-=ox; pos[o3+1]-=oy; pos[o3+2]-=oz; }   // back to the spring's own position
+      if(ox!==0||oy!==0||oz!==0){ pos[o3]-=ox; pos[o3+1]-=oy; pos[o3+2]-=oz; }
       pos[i*3]+=(hx-pos[i*3])*movePull; pos[i*3+1]+=(hy-pos[i*3+1])*movePull; pos[i*3+2]+=(hz-pos[i*3+2])*movePull;
       var rx=isRose(shape)?_RX:0, ry=isRose(shape)?_RY:0, rz=isRose(shape)?_RZ:0;
       pos[o3]+=rx; pos[o3+1]+=ry; pos[o3+2]+=rz; ripOff[o3]=rx; ripOff[o3+1]=ry; ripOff[o3+2]=rz;
@@ -949,11 +689,6 @@
       var heat=(life*0.3+vAmp*0.6)*(1-Math.min(1,d/14))*0.6;
       var br0=baseColor.r, bg0=baseColor.g, bb0=baseColor.b, darkW=0;
       if(suitsMix>0.002 && !sphere && isRose(shape)){
-        // Which petal is this particle in, and how far through it? The rose visits
-        // its petals in the order 0deg -> 240deg -> 120deg (sectors 0,2,1), one per
-        // 60deg of 'ang'. Around each centre crossing the colour blends straight
-        // from the petal it leaves to the petal it enters (the midpoint is AT the
-        // crossing), so white -> gold -> black never detours through the base colour.
         var sa, sb, f;
         if(shape==='rivers'){ sa=sb=i%3; f=1; }
         else { var u6=(ang+0.5236)/1.0472, jj=Math.floor(u6), ph=u6-jj, cur=((-jj)%3+3)%3;
@@ -966,8 +701,6 @@
           var sr=A.r*ka+Bc.r*kb, sg=A.g*ka+Bc.g*kb, sbl=A.b*ka+Bc.b*kb;
           br0+=(sr-br0)*suitsMix; bg0+=(sg-bg0)*suitsMix; bb0+=(sbl-bb0)*suitsMix; }
         darkW=dW*suitsMix; }
-      // the +0.06 red lift warms the gold; it fades out in Writer mode (it is what
-      // turned a black suit red)
       var warm=0.06*(1-suitsMix);
       var cr=br0*bright+warm*bright, cg=bg0*bright, cb=bb0*bright;
       var grey=(cr+cg+cb)/3;
@@ -975,75 +708,52 @@
       col[i*3+1]=(grey+(cg-grey)*C.sat)*C.bri+heat*0.7;
       col[i*3+2]=(grey+(cb-grey)*C.sat)*C.bri+heat*0.4;
       if(C.shimmer>0.001 && isRose(shape) && !sphere){
-        // shimmer DIMS drifting bands (brightening would be clipped at high Brightness)
         var sw=0.5+0.5*Math.sin(6*ang-1.7*aurPhase)*Math.sin(2*ang+0.5*aurPhase);
         var shm=1-Math.min(0.85,C.shimmer*0.7*Math.min(1.5,aurAmp))*sw;
         col[i*3]*=shm; col[i*3+1]*=shm; col[i*3+2]*=shm; }
       if(vAmp>0.001||micAmp>0.002){ var pulse=1+vAmp*0.5+micAmp*0.25; col[i*3]*=pulse; col[i*3+1]*=pulse; col[i*3+2]*=pulse; }
       if(i>=BASE_COUNT){ col[i*3]*=extraMix; col[i*3+1]*=extraMix; col[i*3+2]*=extraMix; }
-      // darkness: this particle's light goes out and it becomes smoke instead
       var d4=i*4;
-      // steep: at brightness 2.5, even 30% of 40k overlapping particles still reads as
-      // full gold, so the light is fully out by ~85% of the way into the darkness
       if(darkW>0){ var keep=Math.pow(Math.max(0,1-darkW*1.18),2); col[i*3]*=keep; col[i*3+1]*=keep; col[i*3+2]*=keep;
-        // eclipse rim: particles on the petal's outline keep a faint cold light, so
-        // the darkness has a visible edge (like the corona around an eclipse)
         if(RP.rim>0.001){ var rimW=Math.max(0,Math.min(1,(radius[i]-0.88)/0.1))*darkW*RP.rim*C.bri*0.35;
           col[i*3]+=0.55*rimW; col[i*3+1]+=0.5*rimW; col[i*3+2]+=0.7*rimW; }
         darkCol[d4]=0.035; darkCol[d4+1]=0.03; darkCol[d4+2]=0.045;
         darkCol[d4+3]=Math.min(0.95,DARK_ALPHA*darkW*(RP.smoke!=null?RP.smoke:1)); anyDark=true; }
       else { darkCol[d4+3]=0; }
-      // LIGHT STREAK: each word sends a comet of light along the whole flow (same
-      // path as the twist): a sharp bright head with a tail fading behind it. It ADDS
-      // white light, so it reads even where the gold is already at full brightness,
-      // and it shines through the darkness petal (added after the darkness fade).
       if(NPULSE>0 && (C.streak||0)>0.001 && isRose(shape) && !sphere){
         var u6s=(ang+0.5236)/1.0472, sLs=((u6s%3)+3)%3, lit=0;
         for(var qs=0;qs<NPULSE;qs++){ var xs=sLs-P_FRONT[qs]; xs=((xs+1.5)%3+3)%3-1.5;
           if(xs>-0.5&&xs<0.08){ lit+=P_AMP[qs]*(xs>=0 ? Math.exp(-xs*xs/0.0016) : Math.exp(xs/0.14)); } }
-        if(lit>0.002){ lit=Math.min(3,lit*2.6)*C.streak;   // short, bright comets
+        if(lit>0.002){ lit=Math.min(3,lit*2.6)*C.streak;
           col[i*3]+=1.0*lit; col[i*3+1]+=0.94*lit; col[i*3+2]+=0.82*lit;
-          darkCol[d4+3]*=Math.max(0,1-lit); } }   // the smoke (drawn on top) parts for the light
+          darkCol[d4+3]*=Math.max(0,1-lit); } }
     }
     for(var j=C.count|0;j<MAX;j++){pos[j*3]=99999;}
-
-    // ---- write this frame's positions into the trail ring buffer ----
-    // Each particle owns HIST consecutive slots; histHead picks which slot is
-    // "now". Older slots keep older positions and are drawn dimmer = comet tail.
-    var tailAmt = C.trail;                       // 0..~1, how strong/long the tail reads
+    var tailAmt = C.trail;
     var writeSlot = histHead;
     for(var p=0;p<C.count;p++){
       var base=(p*HIST+writeSlot)*3;
       trailPos[base]=pos[p*3]; trailPos[base+1]=pos[p*3+1]; trailPos[base+2]=pos[p*3+2];
     }
-    // recolor every echo by its age (how many frames behind "now" it is)
     for(var p2=0;p2<C.count;p2++){
       for(var hh=0;hh<HIST;hh++){
         var slot=p2*HIST+hh, b3=slot*3;
-        var age=(writeSlot-hh+HIST)%HIST;        // 0 = newest
-        var fade=Math.pow(1-(age/HIST), 2) * tailAmt * 0.9; // newest brightest, tapers
+        var age=(writeSlot-hh+HIST)%HIST;
+        var fade=Math.pow(1-(age/HIST), 2) * tailAmt * 0.9;
         trailCol[b3]=col[p2*3]*fade; trailCol[b3+1]=col[p2*3+1]*fade; trailCol[b3+2]=col[p2*3+2]*fade;
       }
     }
-    // park unused particles' trail slots offscreen
     for(var pu=C.count|0; pu<MAX; pu++){ for(var hu=0;hu<HIST;hu++){ trailPos[(pu*HIST+hu)*3]=99999; } }
     histHead=(histHead+1)%HIST;
-
     geo.attributes.position.needsUpdate=true; geo.attributes.color.needsUpdate=true;
     tgeo.attributes.position.needsUpdate=true; tgeo.attributes.color.needsUpdate=true;
-    tmat.size = C.size * (1 + C.soft*1.4) * 1.2;  // trail echoes slightly larger/softer
-    // The rose looks identical every 120 deg, so wrap the turn into +/-60 deg
-    // and scale it by roseMix: leaving the rose unwinds at most 60 deg, and the
-    // disc is never left tilted.
+    tmat.size = C.size * (1 + C.soft*1.4) * 1.2;
     var T3=2.0944; roseTurn=((roseTurn+T3/2)%T3+T3)%T3-T3/2;
-    // final orientation = your view (qUser) x the flock's own motion (idle turn,
-    // sway, in-plane turn) — same as the old rotation.x/y/z, but drag-able anywhere.
     _eAnim.set(0, autoRot*(1-roseMix)+Math.sin(swayPhase)*swayNow*roseMix*motionMix, roseTurn*roseMix*motionMix);
     _qAnim.setFromEuler(_eAnim);
     points.quaternion.copy(qUser).multiply(_qAnim); tpoints.quaternion.copy(points.quaternion); dpoints.quaternion.copy(points.quaternion);
     dpoints.visible=anyDark; anyDark=false;
     if(dpoints.visible){ dmat.size=C.size*DARK_SIZE*(1+C.soft)*(0.7+0.3*(C.smoke!=null?C.smoke:1)); dgeo.attributes.color.needsUpdate=true; }
-    // 4. backdrop: a dim glow behind the rose, so the darkness has light to blot out
     backdrop.material.opacity=Math.min(1,(C.backdrop||0)*0.22)*roseMix;
     backdrop.visible=backdrop.material.opacity>0.002;
     if(backdrop.visible){ var bs=ROSE_BASE*(C.roseSize||1)*2.6; backdrop.scale.set(bs,bs,1); backdrop.material.color.copy(baseColor); }
@@ -1052,8 +762,6 @@
       if(window.__flockViewsChanged) window.__flockViewsChanged(); }
   }
   animate();
-
-  // ---------- build the forge controls (number + slider each) ----------
   function buildGroup(groupId){
     var wrap=document.getElementById(groupId+'Ctrls');
     CTRLS.filter(c=>c[5]===groupId).forEach(function(c){
@@ -1071,7 +779,6 @@
     });
   }
   buildGroup('form');buildGroup('rose');buildGroup('aurora');buildGroup('dark');buildGroup('motion');buildGroup('light');
-  // voice field (only matters in speaking) appended to light
   (function(){var wrap=document.getElementById('lightCtrls');
     var row=document.createElement('div');row.className='ctrl';row.id='voiceRow';row.style.display='none';
     row.innerHTML='<span class="nm">Voice test</span><input type="number" id="num_voice" min="0" max="1" step="0.01" value="0"><input type="range" id="in_voice" min="0" max="1" step="0.01" value="0">';
@@ -1079,7 +786,6 @@
     var n=row.querySelector('#num_voice'),r=row.querySelector('#in_voice');
     r.addEventListener('input',()=>n.value=r.value); n.addEventListener('input',()=>r.value=n.value);
   })();
-
   function loadForm(){
     var s=PROF()[editing];
     CTRLS.forEach(function(c){var k=c[0];
@@ -1090,39 +796,30 @@
     document.getElementById('editingLabel').textContent='Tuning: '+editing+(editProfile==='writer'?' (Writer mode)':'');
     document.getElementById('voiceRow').style.display=(editing==='speaking')?'flex':'none';
   }
-
   document.querySelectorAll('#shapeSeg button').forEach(b=>b.addEventListener('click',function(){PROF()[editing].shape=b.dataset.shape;loadForm();}));
   var swWrap=document.getElementById('sw');
   PALETTE.forEach(function(c){var d=document.createElement('div');d.className='sw';d.dataset.c=c;d.style.background=c;
     d.addEventListener('click',function(){PROF()[editing].color=c;loadForm();});swWrap.appendChild(d);});
-
   document.querySelectorAll('.sbtn').forEach(b=>b.addEventListener('click',function(){
     document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');
     if(b.dataset.s!==curState) startTransition(b.dataset.s);
     curState=b.dataset.s;editing=b.dataset.s;
     var _sl=document.getElementById('stateLabel'); if(_sl) _sl.textContent='Memphis · '+curState;
     loadForm();}));
-
   document.getElementById('reset').addEventListener('click',function(){PROF()[editing]=JSON.parse(JSON.stringify((editProfile==='writer'?WDEFAULTS:DEFAULTS)[editing]));loadForm();});
   document.getElementById('export').addEventListener('click',function(){
     var txt=JSON.stringify(STATES,null,2);
     navigator.clipboard.writeText(txt).then(()=>document.getElementById('exportNote').textContent='Copied! Paste it to me in the chat.',
       ()=>{document.getElementById('exportNote').textContent='Copy blocked — open console (F12), the settings are logged there.';console.log(txt);});
   });
-
-  // ---------- camera distance (live) ----------
   (function(){ var n=document.getElementById('num_camz'), r=document.getElementById('in_camz');
     n.min=r.min=ZOOM_MIN; n.max=r.max=100;
     function setZ(v){ v=parseFloat(v); if(isNaN(v)) return; window.__zoomTouched=true; cam.position.z=Math.max(ZOOM_MIN,Math.min(100,v)); }
     r.addEventListener('input',function(){ setZ(r.value); }); n.addEventListener('input',function(){ setZ(n.value); });
-    // reflect wheel/launch-zoom changes (cheap: 4x a second)
     setInterval(function(){ var z=Math.round(cam.position.z*2)/2;
       if(document.activeElement!==n) n.value=z; if(document.activeElement!==r) r.value=z; },250);
   })();
-
-  // ---------- views + suits controls ----------
   (function(){
-    // CAMERA VIEWS list: drag rows to reorder; Set / Go / clear per slot
     var rowsEl=document.getElementById('viewRows'), lab=document.getElementById('viewLabel'), dragFrom=-1;
     function drawRows(){ var sl=window.__flockSlots(), th=window.__flockThumbs(); rowsEl.innerHTML='';
       sl.forEach(function(v,k){ var r=document.createElement('div'); r.className='vrow'; r.draggable=true; r.dataset.k=k;
@@ -1151,18 +848,15 @@
       pv.textContent=suitsPreview?'Stop preview':'Preview Writer mode'; });
     document.querySelectorAll('#profSeg button').forEach(function(b){ b.addEventListener('click',function(){
       editProfile=b.dataset.p; document.querySelectorAll('#profSeg button').forEach(function(x){ x.classList.toggle('on',x===b); });
-      // editing Writer mode previews it; back to Normal ends the preview
       suitsPreview=(editProfile==='writer'); pv.classList.toggle('on',suitsPreview);
       pv.textContent=suitsPreview?'Stop preview':'Preview Writer mode'; loadForm(); }); });
   })();
-
-  // ---------- save as defaults (only inside the Tent, via the preload bridge) ----------
   (function(){ var b=document.getElementById('saveTuning'), note=document.getElementById('exportNote');
-    var api=window.memphisApp; if(!api||!api.flockSaveTuning) return;   // browser #tune: Copy only
+    var api=window.memphisApp; if(!api||!api.flockSaveTuning) return;
     b.style.display='';
     var cl=document.getElementById('closeTuning'); cl.style.display='';
     cl.addEventListener('click',function(){ document.body.classList.remove('tune');
-      window.dispatchEvent(new Event('flock-tune-closed')); });   // the Tent resyncs to the brain's state
+      window.dispatchEvent(new Event('flock-tune-closed')); });
     b.addEventListener('click',function(){
       var data={version:1, saved:new Date().toISOString(), states:STATES, writerStates:WSTATES,
         view:{startZoom:(window.__flockHome()?window.__flockHome().z:Math.round(cam.position.z*2)/2), home:window.__flockHome(), presets:window.__flockViews(), thumbs:window.__flockThumbs(),
@@ -1173,7 +867,6 @@
       },function(e){ note.textContent='Save failed: '+e; });
     });
   })();
-
   window.addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   loadForm();
 })();

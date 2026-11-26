@@ -1,7 +1,26 @@
 'use strict';
 (function () {
-  const P = window.Phone, E = P.engine;
-  const BASE = 'Evrynthing';
+  const P = window.Phone, E = P.engine, SM = window.SyncModel;
+  const BASE = 'Evrynthing', MEDIA_DIR = BASE + '/Media';
+  const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
+  const urls = new Map();
+  async function media(name) {
+    const n = String(name || '').split('/').pop();
+    if (urls.has(n)) return { ok: true, url: urls.get(n) };
+    const b64 = await E.readBin(MEDIA_DIR + '/' + n);
+    if (!b64) return { ok: false };
+    const bin = atob(b64), u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([u], { type: MIME[n.split('.').pop().toLowerCase()] || 'application/octet-stream' }));
+    urls.set(n, url);
+    return { ok: true, url };
+  }
+  function pictureRel(rel) {
+    const r = String(rel || '').replace(/\\/g, '/');
+    const parts = r.split('/');
+    if (parts.length !== 3 || parts[0] !== BASE || parts[1] !== 'Media' || !E.isBin(r) || /^\./.test(parts[2]) || r.length > 300) throw new Error('Refused: pictures go into Evrynthing/Media only.');
+    return r;
+  }
   const WIKI_FOLDERS = ['00 Index', '01 Law', '02 Substance', '03 Entities', '04 Ideas', '05 Objects', '06 Places', '07 Events',
     '08 Aura', 'Behind the scenes',
     '01 Entities', '02 Ideas', '03 Objects', '04 Places', '05 Events', '06 Theory',
@@ -28,7 +47,8 @@
     }
     if (!files.length) return { ok: false, error: 'The wiki\'s notes are not on this phone yet. On Alaric, press Start syncing in Canon; then tap the badge here to sync.' };
     const dalinari = await E.read(BASE + '/Dalinari/Dalinari.json');
-    return { ok: true, files, folders: [...folders], media: [], homes: { 'Dalinari/Dalinari.json': dalinari } };
+    const media = (await E.list(MEDIA_DIR)).filter((p) => E.isBin(p) && !SM.isCopy(p)).map((p) => p.split('/').pop());
+    return { ok: true, files, folders: [...folders], media, homes: { 'Dalinari/Dalinari.json': dalinari } };
   }
   function pageRel(rel) {
     let r = String(rel || '').replace(/\\/g, '/').trim().replace(/^\/+/, '');
@@ -56,7 +76,8 @@
   async function stack() { const s = await E.local.get(UNDO); return Array.isArray(s) ? s : []; }
   async function push(entry) { const s = await stack(); s.push(entry); while (s.length > STACK_MAX) s.shift(); await E.local.put(UNDO, s); return s.length; }
   async function save(o) {
-    if (o.picture) throw new Error('Pictures are added on Alaric for now.');
+    const pic = o.picture ? pictureRel(o.picture.rel) : null;
+    if (pic && (await E.readBin(pic)) != null) throw new Error('There is already a picture called ' + pic.split('/').pop() + '. Give it another caption.');
     const rel = pageRel(o.rel);
     const text = checkText(o.text);
     const raw = await E.read(rel);
@@ -66,6 +87,7 @@
     }
     const neu = shaped(text, raw);
     if (norm(neu) === norm(raw)) return { ok: true, rel, unchanged: true, undo: (await stack()).length };
+    if (pic) await E.writeBin(pic, o.picture.b64);
     await E.write(rel, neu);
     const undo = await push({ at: new Date().toISOString(), page: rel, label: String(o.label || '').slice(0, 120), ops: [{ op: 'rewrite', path: rel, before: raw, after: neu }] });
     return { ok: true, rel, unchanged: false, undo };
@@ -155,7 +177,7 @@
   }
   window.wikiAPI = {
     phone: true, read, ask, openInVault, openApp, onChanged,
-    media: async () => ({ ok: false }),
+    media,
     art: async () => ({ ok: false }),
     graph: () => Promise.resolve({ ok: true }),
     _pageRel: pageRel, _lists: { WIKI_FOLDERS, SKIP_DIRS, SHELF },

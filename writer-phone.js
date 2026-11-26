@@ -20,10 +20,11 @@
     if (!row || !plates()) return null;
     return { i: Number(row.dataset.i), tx: row.querySelector('.ptext'), note: row.querySelector('.pnote'), inNote: a.classList.contains('pnote') };
   }
-  const KEYS = [['split', 'Split'], ['merge', 'Merge'], ['note', 'Note'], ['dialogue', 'Dialogue'], ['break', 'Break']];
+  const KEYS = [['split', 'Split the plate here', 'split'], ['merge', 'Merge with the next plate', 'merge'], ['note', 'Note', 'document'], ['dialogue', 'Dialogue', 'quote'], ['break', 'Scene break', 'minus']];
+  const IC = (n, z) => (window.BladesIcon ? window.BladesIcon(n, z || 20) : '');
   const bar = document.createElement('div');
   bar.id = 'kbBar'; bar.className = 'kbbar'; bar.hidden = true;
-  bar.innerHTML = KEYS.map(([k, t]) => '<button type="button" class="kb-btn" data-k="' + k + '">' + t + '</button>').join('');
+  bar.innerHTML = KEYS.map(([k, t, i]) => '<button type="button" class="kb-btn" data-k="' + k + '" aria-label="' + t + '" title="' + t + '">' + IC(i) + '</button>').join('');
   document.body.appendChild(bar);
   const key = (k) => bar.querySelector('[data-k="' + k + '"]');
   function showBar() {
@@ -33,7 +34,7 @@
     root.classList.toggle('kbbar', on);
     if (!on) return;
     key('merge').disabled = h.i >= p.plates.length - 1;
-    key('note').textContent = h.inNote ? 'Text' : 'Note';
+    key('note').classList.toggle('on', h.inNote); key('note').setAttribute('aria-label', h.inNote ? 'Back to the text' : 'Note');
     for (const k of ['dialogue', 'break']) key(k).disabled = h.inNote;
   }
   function press(k) {
@@ -116,4 +117,56 @@
     if (a && a.isContentEditable && typeof revealInField === 'function') setTimeout(() => revealInField(a, false), 60);
   }
   if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); fit(); }
+  const Ph = window.Phone, U = Ph && Ph.ui;
+  if (U) {
+    const onDash = () => typeof current === 'undefined' || !current;
+    U.onBack(() => {
+      if (!onDash()) { W.saveAll(3000); document.getElementById('homeBtn').click(); return true; }
+      return false;
+    });
+    const words = () => { const g = (id) => { const e = $(id); return e ? e.textContent : ''; }; return g('sbWords') + ' words in this chapter' + (g('sbSession') && g('sbSession') !== '0' ? ' · ' + g('sbSession') + ' this session' : '') + ' · ' + g('sbRead') + ' min read'; };
+    function chapters() {
+      const body = document.createElement('div'); body.className = 'chlist';
+      const R = (n) => (typeof roman === 'function' ? roman(n) : n);
+      try {
+        STRUCT.books.forEach((b) => {
+          const h = document.createElement('div'); h.className = 'chl-book'; h.textContent = 'Book ' + R(b.n) + (typeof bookTitleOf === 'function' ? ' · ' + bookTitleOf(b.n) : ''); body.appendChild(h);
+          b.acts.forEach((a) => (a.eps || []).forEach((e) => {
+            const eh = document.createElement('div'); eh.className = 'chl-ep'; eh.textContent = e.t || ''; body.appendChild(eh);
+            (e.ch || []).forEach((c) => {
+              const r = document.createElement('button'); r.type = 'button'; r.className = 'chl-row' + (current === c ? ' on' : '') + ' ' + (c.state || 'blank');
+              r.innerHTML = '<span class="n">' + R(c.n) + '</span><span class="t"></span><span class="d"></span>';
+              r.querySelector('.t').textContent = c.t || 'Untitled';
+              r.addEventListener('click', () => { U.closeSheet(); W.saveAll(3000).then(() => openChapter(c)); });
+              body.appendChild(r);
+            });
+          }));
+        });
+      } catch (e) { console.error(e); }
+      const sh = U.sheet({ title: 'Chapters', body });
+      const on = sh.card.querySelector('.chl-row.on'); if (on) setTimeout(() => on.scrollIntoView({ block: 'center' }), 260);
+    }
+    function menu() {
+      const ed = !onDash(), ov = $('pOverview');
+      const body = document.createElement('div'); body.className = 'sh-body';
+      if (ed) { const p = document.createElement('p'); p.className = 'sh-fine'; p.textContent = words(); body.appendChild(p); }
+      U.sheet({ title: ed ? 'This chapter' : 'The book', body: ed ? body : null, items: [
+        { icon: 'book', label: 'Chapters', sub: 'Every chapter in the trilogy', fn: chapters, gold: true },
+        ed && ov ? { icon: 'overview', label: P && P.overview ? 'Back to writing' : 'Overview', sub: 'Fold every plate to two lines, to see and move the chapter', fn: () => ov.click() } : null,
+        { icon: 'document', label: 'Read as a book', fn: () => $('readBookBtn').click() },
+        ed ? { icon: 'search', label: 'The desk', sub: 'Synonyms, rhymes, search your chapters, where was I?', fn: () => $('helpBtn').click() } : null,
+        { icon: 'settings', label: 'Book settings', fn: () => openBookSettings() },
+      ] });
+    }
+    U.corner('tr', { icon: 'menu', label: 'Chapters, overview, reading and settings', fn: menu });
+    const lab = $('saveLabel');
+    function head() {
+      const ed = !onDash();
+      U.title('Writer', ed ? ((current && current.t) || '') + (lab && lab.textContent && lab.textContent !== 'Saved' ? ' · ' + lab.textContent : '') : '');
+      document.body.classList.toggle('w-dash', !ed);
+    }
+    new MutationObserver(head).observe($('sheet'), { childList: true });
+    if (lab) new MutationObserver(head).observe(lab, { childList: true, characterData: true, subtree: true });
+    head();
+  }
 })();

@@ -1,5 +1,4 @@
 'use strict';
-// Canon and Change sets in the shared shell: back (top left), one action (top right).
 (function () {
   const U = window.Phone && window.Phone.ui; if (!U) return;
   const $ = (id) => document.getElementById(id);

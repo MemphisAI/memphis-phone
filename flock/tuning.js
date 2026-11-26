@@ -1,5 +1,3 @@
-// Saved by the forge ("Save as defaults"). Safe to delete: the flock
-// falls back to its baked defaults.
 window.FLOCK_TUNING = {
   "version": 1,
   "saved": "2026-11-10T19:39:34.687Z",
