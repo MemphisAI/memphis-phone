@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self' https://api.github.com; manifest-src 'self'; worker-src 'self'">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#060605">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/memphis-app-256.png">
+<title>Writer</title>
+<link rel="stylesheet" href="branding/blades-ui.css">
+<link rel="stylesheet" href="shared/writer.css">
+<link rel="stylesheet" href="phone-shell.css">
+<link rel="stylesheet" href="writer-phone.css">
+<link rel="stylesheet" href="phone-ui.css">
+</head>
+<body data-page="writer">
+<header id="top">
+  <button id="t-back" class="bl-btn ghost" type="button">Memphis</button>
+  <div id="t-title" class="title">Writer</div>
+  <button id="t-badge" class="badge" type="button" aria-live="polite"></button>
+</header>
+<div class="app" id="app">
+  <main class="stage">
+    <div class="topbar">
+      <button class="brand" id="homeBtn" title="Go to dashboard"><span class="rmark" id="brandRose"></span><span class="wm">Evrynthing<span class="dot">.</span></span></button>
+      <div class="topspacer"></div>
+      <button class="iconbtn" id="timelineBtn" title="Timeline of every event">Timeline</button>
+      <button class="iconbtn" id="parablesBtn" title="Infinity Parables">Cards</button>
+      <button class="iconbtn" id="readBookBtn" title="Read as a finished book">Read</button>
+      <button class="iconbtn" id="exportBtn" title="Export chapters to PDF">Export</button>
+      <button class="savebtn saved" id="saveBtn" title="Save"><span class="savedot"></span><span id="saveLabel">Saved</span></button>
+      <div class="progresschip" title="Trilogy progress">
+        <span id="progpct">0%</span>
+        <span class="bar"><i id="progbar"></i></span>
+      </div>
+    </div>
+    <div class="orrery" id="orrery">
+      <div class="orr-rest" id="orrRest">
+        <span class="orr-path" id="orrPath">Choose a chapter to begin</span>
+        <span class="orr-hint" id="orrHint">Hover for the full map · press to lock</span>
+      </div>
+      <div class="orr-full" id="orrFull">
+        <div class="orr-inner">
+          <div class="band" data-kind="Book"><span class="bl">Parts</span><div class="cells" id="bandBook"></div></div>
+          <div class="band" data-kind="Act"><button class="bl btn" data-exp="Act">Acts <span class="xp">▸ all 9</span></button><div class="cells" id="bandAct"></div></div>
+          <div class="band" data-kind="Episode"><button class="bl btn" data-exp="Episode">Episodes <span class="xp">▸ all 27</span></button><div class="cells" id="bandEp"></div></div>
+          <div class="band" data-kind="Chapter"><button class="bl btn" data-exp="Chapter">Chapters <span class="xp">▸ all 81</span></button><div class="cells" id="bandCh"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="sheet" id="sheet">
+      </div>
+    </div>
+    <div class="fabs" id="fabs" hidden>
+      <button class="fab help" id="helpBtn">Help me</button>
+    </div>
+    <div class="inscol" id="insToolbar" hidden>
+      <button class="ins-btn" data-ins="dialogue" title="Dialogue — a line of speech"><span class="ins-ic"></span><span class="ins-tx">Dialogue</span></button>
+      <button class="ins-btn" data-ins="break" title="Scene break — a rose curve on the page"><span class="ins-ic" id="insBreakIc"></span><span class="ins-tx">Scene break</span></button>
+      <button class="ins-btn" data-ins="snippets" title="Snippets — your ;shortcuts for names"><span class="ins-ic" style="font-weight:700">;</span><span class="ins-tx">Snippets</span></button>
+    </div>
+    <div class="statusbar" id="statusBar" hidden>
+      <span class="sb-item"><b id="sbWords">0</b> words</span>
+      <span class="sb-item sb-dim" id="sbChTWrap" hidden>of <b id="sbChT">0</b> for this chapter</span>
+      <span class="sb-item"><b id="sbSession">0</b> this session</span>
+      <span class="sb-goal" id="sbGoalWrap">
+        <span class="sb-goal-bar" id="sbGoalBar" hidden><i id="sbGoalFill"></i></span>
+        <span class="sb-goal-txt" id="sbGoalTxt"></span>
+        <button class="sb-goal-set" id="sbGoalSet">set a gentle goal</button>
+      </span>
+      <span class="sb-item sb-dim"><b id="sbPages">0</b> pages</span>
+      <span class="sb-item sb-dim"><b id="sbRead">0</b> min read</span>
+    </div>
+  </main>
+  <section class="panel wide" id="helpPanel">
+    <div class="panel-head"><span class="t">The desk</span><button class="x" data-close>×</button></div>
+    <div class="panel-body">
+      <div class="desk-offline">
+        <div class="dict-btns">
+          <button class="dict-btn" data-dict="english">English</button>
+          <button class="dict-btn" data-dict="norwegian">Norwegian</button>
+          <button class="dict-btn" data-dict="dalinari">Dalinari</button>
+        </div>
+        <div class="zhead"><span class="zt">Reference · offline · free</span></div>
+        <input class="srch" placeholder="A word — storm, grief, bright…" id="deskSearch">
+        <div class="lenses" id="lenses">
+          <button class="lens sel" data-l="syn">Synonyms</button>
+          <button class="lens" data-l="ant">Antonyms</button>
+          <button class="lens" data-l="rhy">Rhymes</button>
+        </div>
+        <div class="deskhint" id="deskHint">Type any word for its synonyms, antonyms, or rhymes — real datasets, fully offline.</div>
+        <div id="deskResult"></div>
+        <input class="srch" id="findInput" placeholder="Search your chapters and your vault notes…" spellcheck="false" autocomplete="off" style="margin-top:4px">
+        <div id="findResult"></div>
+        <button class="dtool" id="stuck" style="margin-top:8px">
+          <span class="dtool-label">Where was I?</span>
+          <span class="dtool-more">Your last lines, your own notes in this chapter, and where the chapter before ends. No AI, nothing invented.</span>
+        </button>
+        <div id="stuckResult"></div>
+      </div>
+      <div class="desk-gap"><span>offline above · Memphis below</span></div>
+      <div class="desk-ai" id="aiZone">
+        <button class="zhead zfold" id="aiFold">
+          <span class="zt paid">Ask Memphis · needs internet</span>
+          <span class="zcv">hide</span>
+        </button>
+        <div class="zbody" id="aiBody">
+          <div class="dtool-label" style="margin:2px 0 7px">Ask about my world</div>
+          <input class="srch" id="askInput" placeholder="e.g. what have I said about this place?">
+          <button class="dtool" id="askWorld" style="justify-content:center"><span class="dtool-label">Ask Memphis</span></button>
+          <div id="askResult"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="reader" id="reader" hidden>
+    <div class="reader-bar">
+      <span class="reader-title">Evrynthing — manuscript</span>
+      <button class="iconbtn" id="readerClose" title="Close">Close</button>
+    </div>
+    <div class="reader-page" id="readerPage"></div>
+  </div>
+  <div class="modal" id="readChoose" hidden>
+    <div class="modal-card" style="max-width:380px">
+      <div class="modal-head"><span class="t">Read</span><button class="x" id="readChooseClose">×</button></div>
+      <div class="modal-body">
+        <button class="dtool" id="chooseManuscript" style="margin-bottom:10px"><span class="dtool-label">Manuscript</span><span class="dtool-more">Standard format — monospace, double-spaced, chapter breaks. What an editor sees.</span></button>
+        <button class="dtool" id="chooseBook"><span class="dtool-label">As a finished book</span><span class="dtool-more">Pick a volume off the shelf and read it like the real thing — typeset pages you turn.</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="bookview" id="bookview" hidden>
+    <button class="bv-close" id="bvClose" title="Close">×</button>
+    <div class="bv-shelf" id="bvShelf"></div>
+    <div class="bv-stage" id="bvStage" hidden>
+      <div class="bv-arena" id="bvArena">
+        <div class="bv-neigh bv-neigh-l" id="bvNeighL"></div>
+        <div class="bv-book" id="bvBook">
+          <div class="bv-page bv-left"  id="bvLeft"></div>
+          <div class="bv-gutter"></div>
+          <div class="bv-page bv-right" id="bvRight"></div>
+          <div class="bv-cover" id="bvCover"></div>
+        </div>
+        <div class="bv-neigh bv-neigh-r" id="bvNeighR"></div>
+      </div>
+      <div class="bv-controls">
+        <span class="bv-pageno" id="bvPageNo"></span>
+        <input type="range" class="bv-scrub" id="bvScrub" min="0" max="0" value="0">
+        <button class="bv-backshelf" id="bvBackShelf">Back to shelf</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="snipModal" hidden>
+    <div class="modal-card" style="max-width:520px">
+      <div class="modal-head"><span class="t">Snippets</span><button class="x" id="snipClose">×</button></div>
+      <div class="modal-body">
+        <p class="snip-help">Type <b>;</b> and a shortcut in a chapter, then a space or a full stop: the shortcut becomes the name. Change a name here, or add your own.</p>
+        <div class="snip-list" id="snipList"></div>
+        <div class="snip-row snip-new">
+          <span class="snip-semi">;</span><input id="snipNewKey" placeholder="shortcut" maxlength="12" spellcheck="false">
+          <input id="snipNewTerm" placeholder="what it becomes" spellcheck="false">
+          <button class="chipbtn" id="snipAdd">Add</button>
+        </div>
+        <div class="snip-msg" id="snipMsg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="exportModal" hidden>
+    <div class="modal-card">
+      <div class="modal-head"><span class="t">Export to PDF</span><button class="x" id="exportClose">×</button></div>
+      <div class="modal-body">
+        <div class="exp-controls">
+          <button class="chipbtn" id="expAll">Select all</button>
+          <button class="chipbtn" id="expNone">Clear</button>
+          <button class="chipbtn" id="expDrafted">Only drafted</button>
+        </div>
+        <div class="exp-list" id="expList"></div>
+      </div>
+      <div class="modal-foot">
+        <span class="exp-count" id="expCount">0 chapters selected</span>
+        <button class="startbtn sm" id="expGo">Export selected →</button>
+      </div>
+    </div>
+  </div>
+  <section class="panel wide" id="matterPanel">
+    <div class="panel-head"><span class="t">Front &amp; back matter</span><button class="x" data-close>×</button></div>
+    <div class="panel-body">
+      <div class="deskhint" style="margin-bottom:14px">These pages appear in the <b>Book</b> view (not the Manuscript). Edit the placeholder text — <code>{{TITLE}}</code>, <code>{{TAG}}</code>, <code>{{YEAR}}</code> fill in automatically.</div>
+      <div id="matterList"></div>
+    </div>
+  </section>
+  <section class="panel" id="settingsPanel">
+    <div class="panel-head"><span class="t">Book settings</span><button class="x" data-close>×</button></div>
+    <div class="panel-body">
+      <div class="set-grid">
+        <label class="set-field"><span>Series title</span>
+          <input id="setTitle" type="text" spellcheck="false" placeholder="Evrynthing"></label>
+        <label class="set-field"><span>Tagline</span>
+          <input id="setTag" type="text" spellcheck="false" placeholder="A trilogy in three books"></label>
+        <label class="set-field"><span>A line about your book</span>
+          <textarea id="setIntro" rows="3" spellcheck="false" placeholder="One book of eighty-one chapters…"></textarea></label>
+        <label class="set-field"><span>Writer</span>
+          <input id="setAuthor" type="text" spellcheck="false" placeholder="Your name"></label>
+        <label class="set-field"><span>Target length (words)</span>
+          <input id="setMax" type="number" min="0" step="1000" placeholder="120000"></label>
+      </div>
+      <div class="set-sep"></div>
+      <button class="set-link" id="setMatterBtn">Front &amp; back matter — title page, dedication, thanks…</button>
+    </div>
+  </section>
+  <section class="panel wide" id="dictPanel">
+    <div class="panel-head"><button class="back-desk" id="dictBack" title="Back to the desk">‹ desk</button><span class="t" id="dictTitle">Dictionary</span><button class="x" id="dictClose">×</button></div>
+    <div class="panel-body">
+      <input class="srch" id="dictSearch" placeholder="Search a word…" spellcheck="false" autocomplete="off">
+      <div class="dict-az" id="dictAZ"></div>
+      <div class="dict-add" id="dictAdd" hidden>
+        <div class="dict-add-lbl">Add a word to this dictionary</div>
+        <div class="dict-add-row">
+          <input id="dictNewWord" placeholder="word" spellcheck="false" autocomplete="off">
+          <input id="dictNewClass" placeholder="part of speech (optional)" spellcheck="false" autocomplete="off">
+        </div>
+        <textarea id="dictNewDef" rows="2" placeholder="meaning / definition" spellcheck="false"></textarea>
+        <button class="dict-add-btn" id="dictAddBtn">Add word</button>
+      </div>
+      <div class="dict-count" id="dictCount"></div>
+      <div class="dict-list" id="dictList"></div>
+    </div>
+  </section>
+</div>
+  <div class="tl-view" id="tlView" hidden>
+    <div class="tl-top">
+      <span class="tl-title">Timeline</span>
+      <span class="tl-save" id="tlSave">Saved</span>
+      <span class="tl-grow"></span>
+      <input class="tl-go" id="tlGo" list="tlGoList" placeholder="Go to an event" title="Type part of a title and press Enter ( / )"><datalist id="tlGoList"></datalist>
+      <select class="tl-erago" id="tlEraGo" title="Zoom to an era"><option value="">Era…</option></select>
+      <span class="bl-tabs tl-calmode" title="Show and enter dates in the Earth calendar or in TST"><button class="bl-tab" id="tlModeEarth">Earth</button><button class="bl-tab" id="tlModeTst">TST</button></span>
+      <button class="tl-toggle tl-traybtn" id="tlTrayBtn" hidden>No date</button>
+      <button class="tl-toggle" id="tlChapters">Chapters</button>
+      <button class="bl-btn slot sm" id="tlAdd" title="Add an event">Event</button>
+      <span class="tl-zoom">
+        <button class="bl-ico sm" id="tlZoomOut" title="Zoom out (Ctrl + scroll)"></button>
+        <button class="bl-ico sm" id="tlZoomIn" title="Zoom in (Ctrl + scroll)"></button>
+        <button class="tl-toggle" id="tlHome" title="Your range (set at the bottom left), or everything">Home</button>
+        <button class="tl-toggle" id="tlAllTime" title="All of history">All</button>
+      </span>
+      <button class="bl-ico sm" id="tlClose" title="Close (Esc)"></button>
+    </div>
+    <div class="tl-body">
+      <aside class="tl-side">
+        <div class="tl-side-h">Calendars <span class="tl-side-act"><button class="tl-mini" id="tlAll">all</button><button class="tl-mini" id="tlNone">none</button></span></div>
+        <div class="tl-cals" id="tlCals"></div>
+        <div class="tl-side-add">
+          <button class="bl-btn slot sm" id="tlAddCal">Calendar</button>
+          <button class="bl-btn slot sm" id="tlAddFolder">Folder</button>
+        </div>
+        <button class="tl-eras-h" id="tlErasHead" title="Show or hide the eras"><span class="tl-eras-chev" id="tlErasChev"></span>Eras <span class="tl-eras-n" id="tlErasN"></span></button>
+        <div class="tl-eras-body" id="tlErasBody" hidden>
+          <div class="tl-cals" id="tlEras"></div>
+          <div class="tl-side-add"><button class="tl-mini" id="tlAddEra">+ Era</button><button class="tl-mini" id="tlAddEraView" title="A new era covering what is on screen now">+ Era from view</button></div>
+        </div>
+        <div class="tl-side-foot">
+          <div class="tl-range">
+            <div class="tl-range-h">Your range</div>
+            <label>First <input id="tlFrom" placeholder="e.g. 10,000 BC"></label>
+            <label>Last <input id="tlTo" placeholder="e.g. AD 2100"></label>
+            <div class="tl-range-hint" id="tlRangeHint">Empty: Fit shows every dated event.</div>
+          </div>
+          <div class="tl-help">Scroll to zoom (years, months, days, hours). Drag to move through time; double-click zooms in. The strip at the top is all of history: click or drag it. Press / to find an event.</div>
+        </div>
+      </aside>
+      <section class="tl-main">
+        <div class="tl-tray" id="tlTray" hidden></div>
+        <div class="tl-canvas" id="tlCanvas">
+          <div class="tl-inner" id="tlInner">
+            <div class="tl-axis" id="tlAxis">
+              <div class="tl-over" id="tlOver" title="All of history. Click to jump, drag the window, scroll to zoom."></div>
+              <div class="tl-ticks" id="tlTicks"></div>
+            </div>
+            <div class="tl-lanes-wrap">
+              <div class="tl-bands" id="tlBands"></div>
+              <div class="tl-lanes" id="tlLanes"></div>
+            </div>
+          </div>
+          <div class="tl-empty" id="tlEmpty" hidden>No events yet. Add the first one with Event.</div>
+          <div class="tl-empty" id="tlNoLanes" hidden>Every calendar is hidden. Turn one on at the left.</div>
+        </div>
+      </section>
+      <aside class="tl-inspector" id="tlInspector" hidden>
+        <div class="tl-ins-h"><span>Event</span><button class="bl-ico sm bare" id="tlFClose" title="Close the editor"></button></div>
+        <input id="tlFTitle" class="tl-ftitle" placeholder="Title" spellcheck="true">
+        <div class="tl-f">When
+          <div class="tl-date" id="tlFDate">
+            <div class="tl-date-row" id="tlFEarth">
+              <input id="tlFDay" class="d" placeholder="Day" inputmode="numeric" maxlength="2" aria-label="Day">
+              <select id="tlFMonth" aria-label="Month"><option value="">Month</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select>
+              <input id="tlFYear" class="y" placeholder="Year" inputmode="numeric" aria-label="Year">
+              <select id="tlFEra" aria-label="Era"><option>BC</option><option>AD</option></select>
+              <input id="tlFTime" class="t" placeholder="hh:mm" inputmode="numeric" maxlength="5" aria-label="Time, UTC"><span class="tl-date-u">UTC</span>
+            </div>
+            <div class="tl-date-row" id="tlFTst" hidden>
+              <input id="tlFCycle" class="c" placeholder="Cycle, e.g. 33165.0355" inputmode="decimal" aria-label="Cycle"><span class="tl-date-u">TST</span>
+            </div>
+            <label class="tl-approx"><input type="checkbox" id="tlFApprox"> Approximate</label>
+          </div>
+          <input id="tlFWhen" class="tl-fwhen" placeholder="or type it: 1600 BC · 14 Mar 1600 BC → 1570 BC · 33,165.0355 TST">
+          <div class="tl-hint" id="tlFWhenHint"></div>
+        </div>
+        <label class="tl-f">Chapter<input id="tlFChapter" placeholder="Optional: Book I · Ch 3"></label>
+        <div class="tl-hint" id="tlFChHint"></div>
+        <label class="tl-f">Description<textarea id="tlFDesc" rows="4" spellcheck="true" placeholder="What happens"></textarea></label>
+        <div class="tl-fold">
+          <button class="tl-fold-h" id="tlFCalsHead"><span class="tl-fold-k">Calendars</span><span class="tl-fold-sum" id="tlFCalsSum"></span><span class="tl-fold-chev" id="tlFCalsChev"></span></button>
+          <div class="tl-chips" id="tlFCals" hidden></div>
+        </div>
+        <div class="tl-f">Status
+          <div class="bl-tabs"><button class="bl-tab" id="tlFStated">Settled</button><button class="bl-tab" id="tlFOpen">Open question</button></div>
+          <input id="tlFQ" placeholder="What is still unknown?">
+        </div>
+        <div class="tl-f">Notes
+          <div class="tl-links-row" id="tlFLinks"></div>
+          <input id="tlFAddLink" list="tlNoteList" placeholder="Link a note…">
+          <datalist id="tlNoteList"></datalist>
+        </div>
+        <div class="tl-ins-foot"><button class="bl-btn coal sm tl-del" id="tlFDelete">Delete event</button></div>
+      </aside>
+      <div class="tl-note" id="tlNote" hidden>
+        <div class="tl-note-h"><span id="tlNoteTitle"></span><button class="bl-ico sm bare" id="tlNoteClose" title="Close"></button></div>
+        <div class="tl-note-body" id="tlNoteBody"></div>
+      </div>
+    </div>
+  </div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="shared/sync-model.js"></script>
+<script src="store.js"></script>
+<script src="github.js"></script>
+<script src="engine.js"></script>
+<script src="apps.js"></script>
+<script src="branding/blades-icons.js"></script>
+<script src="app.js"></script>
+<script src="writer-bridge.js"></script>
+<script src="shared/writer-notes.js"></script>
+<script src="shared/writer-1.js"></script>
+<script src="shared/writer-2.js"></script>
+<script src="writer-phone.js"></script>
+</body>
+</html>
