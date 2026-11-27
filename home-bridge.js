@@ -68,8 +68,18 @@
     const now = HM.parseNote(text);
     return { ok: true, where: now.where, what: now.what, with: now.with };
   }
+  async function setPhoto(name, o) {
+    const it = await readItem(String(name || ''));
+    if (!it) return { ok: false, error: 'That thing is no longer in the Home.' };
+    const s = String((o && o.small) || '').replace(/\s+/g, '');
+    if (!/^[A-Za-z0-9+/]+=*$/.test(s) || s.slice(0, 4) !== '/9j/' || s.length * 0.75 > MAX_SMALL) return { ok: false, error: 'That photo could not be read.' };
+    const file = HM.photoName(it.name, Date.now(), 'jpg');
+    try { await E.writeBin(HM.PHOTOS + '/' + file, s); await E.write(HM.notePath(it.name), HM.withPhoto(it.text, file)); }
+    catch (e) { return { ok: false, error: String(e.message || e) }; }
+    return { ok: true, photo: file };
+  }
   async function book(isbn) { return window.HomeBooks.findBook(String(isbn || '').slice(0, 40), window.fetch.bind(window)); }
   function onChanged(fn) { const f = () => fn(); document.addEventListener('phone-synced', f); return () => document.removeEventListener('phone-synced', f); }
   document.addEventListener('focusin', (e) => { if (e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName) && e.target.type !== 'file') setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300); });
-  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, book, onChanged };
+  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, setPhoto, book, onChanged };
 })();

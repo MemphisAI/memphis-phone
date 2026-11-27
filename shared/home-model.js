@@ -174,6 +174,19 @@
     out.delete(lower(name));
     return [...out.values()].sort((a, b) => a.localeCompare(b));
   }
+  function withPhoto(text, file) {
+    const s = String(text == null ? '' : text).replace(/\r\n/g, NL);
+    const m = /^---\n([\s\S]*?)\n---\n?/.exec(s);
+    const head = m ? m[1].split(NL).filter((l) => !/^photo:/.test(l)) : ['home: item'];
+    let at = head.length; for (let i = head.length - 1; i >= 0; i--) if (/^(home|added):/.test(head[i])) { at = i + 1; break; }
+    head.splice(at, 0, 'photo: ' + file);
+    const lines = (m ? s.slice(m[0].length) : s).split(NL);
+    const emb = lines.findIndex((l) => /^\s*!\[\[[^\]]+\.(png|jpe?g|webp|gif)(\|[^\]]*)?\]\]\s*$/i.test(l));
+    if (emb >= 0) lines[emb] = '![[' + file + ']]';
+    else { while (lines.length && lines[0].trim() === '') lines.shift(); lines.unshift('![[' + file + ']]', ''); }
+    let body = lines.join(NL).replace(/\n+$/, '') + NL;
+    return '---' + NL + head.join(NL) + NL + '---' + NL + NL + body.replace(/^\n+/, '');
+  }
   function withWords(text, words) {
     const { head, body } = splitNote(text);
     const lines = body.split(NL);
@@ -206,5 +219,5 @@
   }
   return { DIR, PHOTOS, ORIGINALS, MAX_NAME, MAX_WORDS, PHOTO_MAX, PHOTO_Q, cleanName, freeName, notePath, itemName, photoName, okPhoto,
     cleanWords, mergeWords, makeNote, parseNote, withWords, firstLine, sortItems, day,
-    cleanBook, PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
+    withPhoto, cleanBook, PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
 });

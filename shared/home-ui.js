@@ -29,7 +29,7 @@
     photoUrl(file).then((u) => {
       if (!u) { box.classList.add('none'); box.innerHTML = IC('tool-home', 30); return; }
       const img = new Image(); img.alt = ''; img.decoding = 'async'; img.src = u;
-      [...box.children].forEach((c) => { if (!c.classList.contains('holds')) c.remove(); });
+      [...box.children].forEach((c) => { if (!c.classList.contains('holds') && !c.classList.contains('phtag')) c.remove(); });
       box.prepend(img);
     });
   }
@@ -452,10 +452,29 @@
   }
   function drawItem(it) {
     const path = HM.pathOf(items, it.name).slice().reverse();
-    chrome(it.name, path.length ? path.join(' › ') : it.added ? 'Added ' + niceDay(it.added) : '', true, { label: 'Add a thing here', where: it.name });
+    const holds = HM.inside(items, it.name).length > 0;
+    chrome(it.name, path.length ? path.join(' › ') : it.added ? 'Added ' + niceDay(it.added) : '', true, holds ? { label: 'Add a thing here', where: it.name } : null);
     view.innerHTML = '';
     const box = el('article', 'one');
-    const ph = el('div', 'big'); fillPhoto(ph, it.photo);
+    const ph = button('big', '', () => pickPhoto.click()); fillPhoto(ph, it.photo);
+    ph.setAttribute('aria-label', it.photo ? 'Change the photo' : 'Add a photo');
+    const phTag = el('span', 'phtag', it.photo ? 'Change photo' : 'Add a photo');
+    ph.appendChild(phTag);
+    const pickPhoto = el('input'); pickPhoto.type = 'file'; pickPhoto.accept = 'image/*'; pickPhoto.hidden = true;
+    pickPhoto.addEventListener('change', async () => {
+      const file = pickPhoto.files && pickPhoto.files[0]; pickPhoto.value = ''; if (!file) return;
+      ph.classList.add('busy');
+      try {
+        const small = await shrink(file);
+        const original = API.keepsOriginal ? await originalOf(file) : null;
+        if (editing()) await saveWords(true);
+        const r = await API.setPhoto(it.name, { small: small.b64, original }).catch((e) => ({ ok: false, error: String(e && e.message || e) }));
+        if (!r || !r.ok) toast((r && r.error) || 'The photo could not be saved.', 5000);
+        else { toast('New photo for ' + it.name + '.'); await load(true); }
+      } catch (e) { toast(e && e.message ? e.message : 'That photo could not be read.', 5000); }
+      ph.classList.remove('busy');
+    });
+    box.appendChild(pickPhoto);
     const side = el('div', 'side');
     if (path.length) {
       const pth = el('nav', 'path'); pth.setAttribute('aria-label', 'Where it is');
@@ -510,7 +529,11 @@
     const sec = el('section', 'inhere');
     sec.appendChild(el('h2', 'sec', ins.length ? 'In ' + esc(it.name) + ' <span class="cnt">' + ins.length + '</span>' : 'Nothing in ' + esc(it.name) + ' yet'));
     if (ins.length) sec.appendChild(grid(ins));
-    else sec.appendChild(el('p', 'hint', 'Add a thing here, or open another thing and choose ' + it.name + ' as its place.'));
+    else {
+      sec.appendChild(el('p', 'hint', 'If ' + it.name + ' holds things (a shelf, a box, a wardrobe), put them in it here, or open a thing and choose ' + it.name + ' as its place.'));
+      const put = button('bl-btn coal sm', IC('plus', 13) + '<span>Put a thing in ' + esc(it.name) + '</span>', () => go({ k: 'add', where: it.name }));
+      put.classList.add('putin'); sec.appendChild(put);
+    }
     view.appendChild(sec);
   }
   async function saveWords(quiet) {

@@ -130,17 +130,24 @@
   }
   async function lookup(isbn, fetchFn) {
     const order = /^97882/.test(isbn) ? ['nb', 'ol'] : ['ol', 'nb'];
-    let reached = 0;
+    const NAMES = { nb: 'the National Library of Norway', ol: 'Open Library' };
+    const failed = [];
     for (const s of order) {
-      try {
-        const r = await fetchFn(s === 'nb' ? NB(isbn) : OL(isbn), { headers: { Accept: 'application/json' } });
-        if (!r.ok) continue;
-        reached++;
-        const b = s === 'nb' ? parseNb(await r.json(), isbn) : parseOl(await r.json(), isbn);
-        if (b) return b;
-      } catch (e) {   }
+      let answered = false;
+      for (let tryNo = 0; tryNo < 2 && !answered; tryNo++) {
+        try {
+          const r = await fetchFn(s === 'nb' ? NB(isbn) : OL(isbn), { headers: { Accept: 'application/json' } });
+          if (!r.ok) continue;
+          const j = await r.json();
+          answered = true;
+          const b = s === 'nb' ? parseNb(j, isbn) : parseOl(j, isbn);
+          if (b) return b;
+        } catch (e) {   }
+      }
+      if (!answered) failed.push(s);
     }
-    if (!reached) throw new Error('The book databases could not be reached. Check the connection and scan again.');
+    if (failed.length === order.length) throw new Error('The book databases could not be reached. Check the connection and scan again.');
+    if (failed.length) { const who = failed.map((s) => NAMES[s]).join(' and '); throw new Error(who[0].toUpperCase() + who.slice(1) + ' did not answer, so this book could not be checked there. Try again.'); }
     return null;
   }
   async function fetchCover(url, fetchFn) {
