@@ -255,6 +255,7 @@
     }
     for (const id of ids) if (!verdicts.has(id)) waiting++;
     out.changes = waiting;
+    out.home = all.filter((p) => /^Home\/[^/]+\.md$/.test(p) && !SM.isCopy(p)).length;
     if (window.CanonModel) {
       try {
         const files = [];
@@ -330,7 +331,7 @@
   }
   function appsMenu(n) {
     const body = el('div', 'appgrid');
-    const subs = { canon: n.canon != null ? n.canon.toLocaleString('en-GB') + ' decisions left' : '', wiki: n.wiki + ' pages', changes: n.changes ? n.changes + ' waiting' : 'Nothing waiting', writer: 'The book' };
+    const subs = { canon: n.canon != null ? n.canon.toLocaleString('en-GB') + ' decisions left' : '', wiki: n.wiki + ' pages', changes: n.changes ? n.changes + ' waiting' : 'Nothing waiting', writer: 'The book', home: n.home ? n.home + (n.home === 1 ? ' thing' : ' things') : 'Your things' };
     for (const a of APPS) {
       const t = el('a', 'app'); t.href = a.href;
       t.innerHTML = (window.BladesCoin ? window.BladesCoin(a.id === 'changes' ? 'review' : a.id, 52) : '') + '<span class="nm">' + esc(a.label) + '</span><span class="sb">' + esc(subs[a.id] || '') + '</span>';
@@ -416,6 +417,7 @@
     };
     for (const a of APPS) {
       if (a.id === 'writer' && ch) continue;
+      if (a.id === 'home') continue;
       const x = info[a.id] || { icon: 'apps' };
       const t = el('a', 'tile' + (x.hot ? ' hot' : ''));
       t.href = a.href;

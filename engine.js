@@ -4,7 +4,7 @@
   else root.PhoneEngine = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   const TEXT = /\.(md|json|txt)$/i;
-  const MEDIA = /^Evrynthing\/Media\/[^/]+\.(png|jpe?g|webp|gif)$/i;
+  const MEDIA = /^(Evrynthing\/Media|Home\/Photos)\/[^/]+\.(png|jpe?g|webp|gif)$/i;
   const MAX_BIN = 8 * 1024 * 1024;
   const isBin = (p) => MEDIA.test(String(p || ''));
   function create(opts) {
@@ -41,7 +41,7 @@
       const f = await store.get('files', p); return f ? f.b64 : null;
     }
     async function writeBin(p, b64) {
-      if (!keep(p) || !isBin(p)) throw new Error('Pictures can only go into Evrynthing/Media (png, jpg, webp or gif).');
+      if (!keep(p) || !isBin(p)) throw new Error('Pictures can only go into Evrynthing/Media or Home/Photos (png, jpg, webp or gif).');
       b64 = String(b64 || '').replace(/\s+/g, '');
       if (!b64 || !/^[A-Za-z0-9+/]+=*$/.test(b64)) throw new Error('That picture could not be read.');
       if (b64.length * 0.75 > MAX_BIN) throw new Error('That picture is bigger than 8 MB.');

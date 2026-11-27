@@ -79,6 +79,8 @@ I['tool-wiki']     =[B(join(arc(12,12,3.6,-90,270,36)),{taper:'both',W:2.2}), B(
                      {dot:[12,3.7,2]}, {dot:[19.2,16.2,2]}, {dot:[4.8,16.2,2]}];
 I['tool-canon']    =[B(line([6.8,19.6],[6.8,12.6]),{W:2.2,taper:'end'}), B(line([17.2,19.6],[17.2,12.6]),{W:2.2,taper:'end'}),
                      B(line([12,20],[12,8]),{W:2.8,taper:'end'}), {dot:[12,4.4,2.1]}, B(line([3.6,21.4],[20.4,21.4]),{W:1.7})];
+I['tool-home']     =[B(line([2.6,11.6],[12,3.4]),{W:2.3,taper:'start'}), B(line([21.4,11.6],[12,3.4]),{W:2.3,taper:'start'}),
+                     B(round([[5.6,10.4],[5.6,20.4],[18.4,20.4],[18.4,10.4]],2),{W:2,taper:'both'}), {dot:[12,15.6,2]}];
 I['tool-atelier']  =[B(_pal,{W:2.1,taper:'none'}), {dot:[7.8,8.6,1.6]}, {dot:[12.2,7.2,1.6]}, {dot:[7.2,13.6,1.6]}, B(line([22,2],[11,15.5]),{W:2.8,taper:'start',over:true})];
 let _uid=0;
 function svg(name,size,extra){
@@ -99,8 +101,8 @@ function svg(name,size,extra){
   if(cuts){ defs+=`<mask id="${id}c" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/>${cuts}</mask>`; body=`<g mask="url(#${id}c)">${body}</g>`; }
   return `<svg class="bi bi-${name}" viewBox="0 0 24 24" width="${size||20}" height="${size||20}" fill="currentColor" aria-hidden="true"${extra||''}>${defs?'<defs>'+defs+'</defs>':''}${body}</svg>`;
 }
-const COIN_TOOLS={writer:'pen', wiki:'tool-wiki', canon:'tool-canon', strategist:'tool-strategist', butler:'tool-butler', atelier:'tool-atelier', insight:'tool-insight', sandbox:'sandbox', parables:'cards'};
-const COIN_NAMES={writer:'Writer', wiki:'Wiki', canon:'Canon', strategist:'Strategist', butler:'Butler', atelier:'Atelier', insight:'System Insight', sandbox:'Sandbox'};
+const COIN_TOOLS={writer:'pen', wiki:'tool-wiki', canon:'tool-canon', home:'tool-home', strategist:'tool-strategist', butler:'tool-butler', atelier:'tool-atelier', insight:'tool-insight', sandbox:'sandbox', parables:'cards'};
+const COIN_NAMES={writer:'Writer', wiki:'Wiki', canon:'Canon', home:'Home', strategist:'Strategist', butler:'Butler', atelier:'Atelier', insight:'System Insight', sandbox:'Sandbox'};
 function bladesCoin(tool,size){
   const s=size||28, ic=COIN_TOOLS[tool]||'apps';
   return `<span class="bl-coin" data-tool="${tool}" style="width:${s}px;height:${s}px" aria-hidden="true">${svg(ic,Math.round(s*0.72))}</span>`;

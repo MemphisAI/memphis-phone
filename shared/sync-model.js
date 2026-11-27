@@ -6,16 +6,19 @@
   const WORKBENCH = 'Evrynthing Canon Workbench';
   const CANON_DIR = 'Canon';
   const DECISIONS = CANON_DIR + '/decisions.json';
+  const HOME_DIR = 'Home';
   const PATHS = [
     { path: 'Manuscript', label: 'The Manuscript' },
     { path: 'Evrynthing', label: 'The Evrynthing notes (the wiki)' },
     { path: WORKBENCH, label: 'The Canon Workbench' },
     { path: CANON_DIR, label: 'Your Canon answers' },
+    { path: HOME_DIR, label: 'The Home (your things; photo originals stay on Alaric)' },
   ];
   const MAX_FILE = 90 * 1024 * 1024;
   const BEGIN = '# --- book sync (Memphis, phone brief step 1) ---', END = '# --- end of book sync ---';
   const BLOCK = [BEGIN, '!/Evrynthing/', '!/' + WORKBENCH + '/', '!/' + CANON_DIR + '/',
-    '/' + CANON_DIR + '/*.prev.json', '/' + CANON_DIR + '/*.tmp', '**/.snapshots/', END];
+    '/' + CANON_DIR + '/*.prev.json', '/' + CANON_DIR + '/*.tmp', '**/.snapshots/',
+    '!/' + HOME_DIR + '/', '/' + HOME_DIR + '/.originals/', '/' + HOME_DIR + '/**/*.tmp', END];
   function gitignoreWith(text) {
     const t = String(text || '').replace(/\r\n/g, '\n');
     const i = t.indexOf(BEGIN), j = t.indexOf(END);
@@ -192,6 +195,11 @@
     if (s < 86400) return Math.round(s / 3600) + ' h ago';
     return Math.round(s / 86400) + ' days ago';
   }
-  return { WORKBENCH, CANON_DIR, DECISIONS, PATHS, MAX_FILE, BLOCK, KEPT_DIR, gitignoreWith, hasBlock, copyName, isCopy, stampOnly, synced, mergeDecisions,
+  function gitignoreUpdate(text) {
+    if (!hasBlock(text)) return null;
+    const want = gitignoreWith(text), have = lf(text);
+    return want === have ? null : want;
+  }
+  return { WORKBENCH, CANON_DIR, DECISIONS, HOME_DIR, gitignoreUpdate, PATHS, MAX_FILE, BLOCK, KEPT_DIR, gitignoreWith, hasBlock, copyName, isCopy, stampOnly, synced, mergeDecisions,
     mergeText, mergeJson, mergeFile, keptName, isKept, statusLine, stamp };
 });
