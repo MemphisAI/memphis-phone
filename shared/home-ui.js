@@ -63,11 +63,13 @@
   async function leave(next) {
     if (screen.k === 'add' && next.k !== 'add') kept = dirtyAdd() ? { small: draft.small, original: draft.original, url: draft.url, name: draft.nameEl.value, words: draft.wordsEl.value, where: draft.where, what: draft.what.slice() } : null;
     if (screen.k === 'item' && editing()) await saveWords(true);
+    if (screen.k === 'books') { camStop(); booksUi = null; }
     closeChooser();
   }
   function top() { try { view.scrollTop = 0; window.scrollTo(0, 0); } catch (e) {   } }
   function draw() {
     if (screen.k === 'add') return drawAdd();
+    if (screen.k === 'books') return drawBooks();
     if (screen.k === 'item') { const it = find(screen.name); if (it) return drawItem(it); screen = { k: 'list' }; }
     drawList();
   }
@@ -77,6 +79,7 @@
     if (my !== seq) return;
     if (!r || !r.ok) { view.innerHTML = ''; view.appendChild(el('div', 'empty', '<h1>The Home could not open</h1><p>' + esc(r && r.error || 'Unknown') + '</p>')); return; }
     items = r.items || [];
+    if (screen.k === 'books') return;
     if (redraw !== true && (screen.k === 'add' || (screen.k === 'item' && editing()) || chooserOpen())) return;
     draw();
   }
@@ -235,7 +238,8 @@
     });
     f.addEventListener('submit', (e) => e.preventDefault());
     name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); words.focus(); } });
-    f.append(pick, shot, nl, pw, kw, wl, save);
+    const scan = button('bl-btn coal wide booksbtn', IC('book', 16) + '<span>Books: scan their barcodes instead</span>', () => go({ k: 'books', where: draft.where }));
+    f.append(scan, pick, shot, nl, pw, kw, wl, save);
     view.appendChild(f);
   }
   function chip(label, open, remove) {
@@ -286,6 +290,156 @@
     const ext = (/\.([A-Za-z0-9]{2,5})$/.exec(file.name || '') || [])[1] || (file.type.split('/')[1] || 'jpg');
     return new Promise((res) => { const r = new FileReader(); r.onload = () => { const s = String(r.result); res({ b64: s.slice(s.indexOf(',') + 1), ext: ext.toLowerCase() }); }; r.onerror = () => res(null); r.readAsDataURL(file); });
   }
+  const HB = window.HomeBooks;
+  let cam = null;
+  function camStop() {
+    if (!cam) return;
+    clearTimeout(cam.timer);
+    try { cam.stream.getTracks().forEach((t) => t.stop()); } catch (e) {   }
+    try { cam.video.srcObject = null; } catch (e) {   }
+    cam = null;
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') camStop(); else if (screen.k === 'books' && booksUi && booksUi.wantCam) camStart(); });
+  let booksUi = null;
+  async function camStart() {
+    const ui = booksUi; if (!ui || cam) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { ui.status('No camera here: type the ISBN, or take a photo of the barcode.'); ui.box.classList.add('off'); return; }
+    ui.status('Starting the camera...');
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); }
+    catch (e) { ui.box.classList.add('off'); ui.status(e && e.name === 'NotAllowedError' ? 'The camera is not allowed. Allow it for Memphis in Settings, or type the ISBN.' : 'No camera found: type the ISBN, or take a photo of the barcode.'); return; }
+    if (booksUi !== ui || screen.k !== 'books') { stream.getTracks().forEach((t) => t.stop()); return; }
+    ui.box.classList.remove('off');
+    const video = ui.video; video.srcObject = stream; video.muted = true; video.setAttribute('playsinline', ''); video.setAttribute('muted', '');
+    try { await video.play(); } catch (e) {   }
+    cam = { stream, video, canvas: document.createElement('canvas'), timer: null };
+    ui.status('Hold a barcode across the gold line.');
+    const tick = () => {
+      if (!cam || cam.video !== video) return;
+      const vw = video.videoWidth, vh = video.videoHeight;
+      if (vw && vh) {
+        const k = Math.min(1, 1280 / vw), cw = Math.round(vw * k), bandH = Math.round(vh * 0.36), ch = Math.round(bandH * k);
+        const c = cam.canvas; if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+        const g = c.getContext('2d', { willReadFrequently: true });
+        g.drawImage(video, 0, Math.round((vh - bandH) / 2), vw, bandH, 0, 0, cw, ch);
+        const code = HB.decodeImage(g.getImageData(0, 0, cw, ch), { need: 2, rows: 14 });
+        if (code) seen(code);
+      }
+      cam.timer = setTimeout(tick, 140);
+    };
+    tick();
+  }
+  let lastCode = null, lastAt = 0;
+  const rest = new Map();
+  function seen(code) {
+    const isbn = HB.isbnFrom(code); if (!isbn) return;
+    const now = Date.now();
+    if ((rest.get(isbn) || 0) > now) return;
+    if (lastCode !== isbn || now - lastAt > 1500) { lastCode = isbn; lastAt = now; return; }
+    rest.set(isbn, now + 5000); lastCode = null;
+    if (PH) PH.ui.haptic();
+    handleBook(isbn);
+  }
+  function drawBooks() {
+    const into = screen.where && find(screen.where) ? find(screen.where).name : null;
+    screen.where = into;
+    chrome('Scan books', into ? 'Into ' + into : '', true, null);
+    view.innerHTML = '';
+    const wrap = el('div', 'books');
+    const fw = el('div', 'field', '<span>Where they go</span>'), wr = el('div', 'chips');
+    const drawWhere = () => {
+      wr.innerHTML = '';
+      if (screen.where) wr.appendChild(chip(screen.where, null, () => { screen.where = null; drawWhere(); chrome('Scan books', '', true, null); }));
+      wr.appendChild(button('bl-btn coal sm', IC(screen.where ? 'split' : 'plus', 13) + '<span>' + (screen.where ? 'Somewhere else' : 'Choose a place') + '</span>', () => choose({
+        title: 'Where do these books go?', list: placesFor(null), current: screen.where ? [screen.where] : [], none: 'In no place', allowNew: true,
+        done: async (n, isNew) => { const p = n ? await ensurePlace(n[0], isNew) : null; if (n && !p) return; screen.where = p; drawWhere(); chrome('Scan books', p ? 'Into ' + p : '', true, null); },
+      })));
+    };
+    drawWhere(); fw.appendChild(wr);
+    const box = el('div', 'cam off');
+    const video = el('video'); video.setAttribute('playsinline', ''); video.muted = true; video.autoplay = true;
+    box.append(video, el('div', 'aim'));
+    const status = el('p', 'camline', '');
+    const row = el('div', 'isbnrow');
+    const inp = el('input'); Object.assign(inp, { type: 'text', inputMode: 'numeric', placeholder: 'ISBN, e.g. 978-82-03-19353-8', autocomplete: 'off', enterKeyHint: 'go' }); inp.className = 'isbn';
+    const look = () => { const isbn = HB.isbnFrom(inp.value); if (!isbn) { toast('That is not a book\'s ISBN: 13 digits starting 978 or 979, or 10 digits.'); return; } inp.value = ''; handleBook(isbn); };
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); look(); } });
+    const pick = el('input'); pick.type = 'file'; pick.accept = 'image/*'; pick.hidden = true;
+    pick.addEventListener('change', async () => { const file = pick.files && pick.files[0]; pick.value = ''; if (file) photoBarcode(file); });
+    row.append(inp, button('bl-btn coal', '<span>Look up</span>', look), button('bl-btn coal', IC('plus', 14) + '<span>Photo of a barcode</span>', () => pick.click()), pick);
+    const list = el('div', 'found');
+    wrap.append(fw, box, status, row, list);
+    view.appendChild(wrap);
+    booksUi = { box, video, list, wantCam: true, status: (t) => { status.textContent = t; }, rows: new Map() };
+    camStart();
+  }
+  async function photoBarcode(file) {
+    const src = URL.createObjectURL(file);
+    try {
+      const img = new Image(); img.src = src; await img.decode();
+      let code = null;
+      for (const wid of [1600, 1100, 700]) {
+        const k = Math.min(1, wid / img.naturalWidth), w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const g = c.getContext('2d'); g.drawImage(img, 0, 0, w, h);
+        code = HB.decodeImage(g.getImageData(0, 0, w, h), { need: 1, rows: 60 });
+        if (code) break;
+      }
+      const isbn = code && HB.isbnFrom(code);
+      if (isbn) handleBook(isbn); else toast('No book barcode found in that photo. Hold it closer and level, or type the ISBN.', 5000);
+    } catch (e) { toast('That photo could not be read.'); }
+    finally { URL.revokeObjectURL(src); }
+  }
+  async function handleBook(isbn) {
+    const ui = booksUi; if (!ui) return;
+    let r = ui.rows.get(isbn);
+    if (r) { ui.list.prepend(r.el); r.el.classList.remove('flash'); void r.el.offsetWidth; r.el.classList.add('flash'); if (!r.retry) return; }
+    if (!r) { r = { el: el('div', 'brow') }; ui.rows.set(isbn, r); ui.list.prepend(r.el); }
+    r.retry = false;
+    const show = (cls, cover, title, sub, extra) => {
+      r.el.className = 'brow ' + cls;
+      r.el.innerHTML = '';
+      const ph = el('span', 'bc'); if (cover) { const im = new Image(); im.alt = ''; im.src = cover; ph.appendChild(im); } else ph.innerHTML = IC('book', 20);
+      const tx = el('span', 'bt', '<span class="nm">' + esc(title) + '</span>' + (sub ? '<span class="sb">' + esc(sub) + '</span>' : ''));
+      r.el.append(ph, tx); if (extra) r.el.appendChild(extra);
+    };
+    const there = items.find((x) => x.isbn === isbn);
+    if (there) { show('have', null, there.name, 'Already in the Home' + (there.where ? ', in ' + there.where : ''), button('bl-btn ghost sm', 'Open', () => go({ k: 'item', name: there.name }))); return; }
+    show('wait', null, 'Looking up ' + isbn, 'Asking the book databases...');
+    const res = await API.book(isbn).catch((e) => ({ ok: false, error: String(e && e.message || e) }));
+    if (booksUi !== ui) return;
+    if (!res || !res.ok) { r.retry = true; show('bad', null, isbn, (res && res.error) || 'The book databases could not be reached.', button('bl-btn coal sm', 'Try again', () => handleBook(isbn))); return; }
+    const where = screen.where || null;
+    if (!res.book) {
+      const form = el('span', 'bname');
+      const t = el('input'); Object.assign(t, { type: 'text', placeholder: 'Type the title', maxLength: HM.MAX_NAME, autocomplete: 'off', enterKeyHint: 'done' });
+      t.setAttribute('autocapitalize', 'sentences');
+      const addIt = async () => {
+        const n = HM.cleanName(t.value); if (!n) { t.focus(); return; }
+        const a = await API.add({ name: n, what: ['Book'], where, book: { isbn } }).catch((e) => ({ ok: false, error: String(e && e.message || e) }));
+        if (!a || !a.ok) { toast((a && a.error) || 'It could not be saved.', 5000); return; }
+        await itemsNow();
+        show('done', null, a.name, 'Added' + (where ? ' to ' + where : '') + ' · typed by you', button('bl-btn ghost sm', 'Open', () => go({ k: 'item', name: a.name })));
+      };
+      t.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addIt(); } });
+      form.append(t, button('bl-btn gold sm', 'Add', addIt));
+      show('unknown', null, 'Not in the book databases', isbn + ': type its title', form);
+      if (!PH) t.focus();
+      return;
+    }
+    const b = res.book, cover = res.cover ? 'data:image/jpeg;base64,' + res.cover : null;
+    const by = b.authors && b.authors.length ? b.authors.join(', ') : '';
+    show('wait', cover, b.title, (by ? by + ' · ' : '') + 'adding...');
+    const a = await API.add({ name: b.title, words: HB.bookWords(b), small: res.cover || null, what: ['Book'], where, book: { isbn, authors: b.authors, year: b.year } }).catch((e) => ({ ok: false, error: String(e && e.message || e) }));
+    if (booksUi !== ui) return;
+    if (!a || !a.ok) {
+      if (a && a.exists) { show('have', cover, a.exists, 'Already in the Home', button('bl-btn ghost sm', 'Open', () => go({ k: 'item', name: a.exists }))); return; }
+      r.retry = true; show('bad', cover, b.title, (a && a.error) || 'It could not be saved.', button('bl-btn coal sm', 'Try again', () => handleBook(isbn))); return;
+    }
+    await itemsNow();
+    show('done', cover, a.name, [by, b.year].filter(Boolean).join(', ') + (where ? ' · added to ' + where : ' · added'), button('bl-btn ghost sm', 'Open', () => go({ k: 'item', name: a.name })));
+  }
+  async function itemsNow() { const r = await API.list().catch(() => null); if (r && r.ok) items = r.items || []; }
   let edit = null;
   const editing = () => !!(edit && edit.ta && edit.ta.isConnected && edit.ta.value !== edit.base);
   async function setParents(it, p, msg) {

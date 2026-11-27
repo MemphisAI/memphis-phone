@@ -6,7 +6,7 @@
   async function readItem(name) {
     const text = await E.read(HM.notePath(name)); if (text == null) return null;
     const it = HM.parseNote(text);
-    return { name, words: it.words, photo: it.photo, added: it.added, where: it.where, what: it.what, with: it.with, text };
+    return { name, words: it.words, photo: it.photo, added: it.added, where: it.where, what: it.what, with: it.with, isbn: it.isbn, author: it.author, published: it.published, text };
   }
   async function list() {
     if (!(await E.signedIn())) { location.href = 'index.html'; return { ok: false, error: 'Not signed in.' }; }
@@ -29,8 +29,11 @@
     o = o || {};
     const name = HM.freeName(o.name, await names());
     if (!name) return { ok: false, error: 'Give it a name.' };
-    const p = HM.checkParents(name, o, (await list()).items || []);
+    const all = (await list()).items || [];
+    const p = HM.checkParents(name, o, all);
     if (p.error) return { ok: false, error: p.error };
+    const bk = o.book ? HM.cleanBook(o.book) : null;
+    if (bk) { const dup = all.find((x) => x.isbn === bk.isbn); if (dup) return { ok: false, exists: dup.name, error: dup.name + ' is already in the Home.' }; }
     const when = Date.now();
     let photoFile = null;
     if (o.small) {
@@ -40,7 +43,7 @@
       photoFile = HM.photoName(name, when, 'jpg');
       try { await E.writeBin(HM.PHOTOS + '/' + photoFile, s); } catch (e) { return { ok: false, error: String(e.message || e) }; }
     }
-    try { await E.write(HM.notePath(name), HM.makeNote({ added: HM.day(new Date(when)), photo: photoFile, words: o.words, where: p.where, what: p.what, with: p.with })); }
+    try { await E.write(HM.notePath(name), HM.makeNote({ added: HM.day(new Date(when)), photo: photoFile, words: o.words, where: p.where, what: p.what, with: p.with, book: bk })); }
     catch (e) { if (photoFile) await E.discard(HM.PHOTOS + '/' + photoFile).catch(() => {}); return { ok: false, error: String(e.message || e) }; }
     return { ok: true, name };
   }
@@ -65,7 +68,8 @@
     const now = HM.parseNote(text);
     return { ok: true, where: now.where, what: now.what, with: now.with };
   }
+  async function book(isbn) { return window.HomeBooks.findBook(String(isbn || '').slice(0, 40), window.fetch.bind(window)); }
   function onChanged(fn) { const f = () => fn(); document.addEventListener('phone-synced', f); return () => document.removeEventListener('phone-synced', f); }
   document.addEventListener('focusin', (e) => { if (e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName) && e.target.type !== 'file') setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300); });
-  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, onChanged };
+  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, book, onChanged };
 })();

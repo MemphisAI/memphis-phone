@@ -27,3 +27,7 @@ body[data-app="home"]{display:block}
 .ch-panel{width:100%;max-height:82vh;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
 .ch-q{font-size:16px}
 .ch-row{min-height:52px;justify-content:center}
+.cam{aspect-ratio:3/4;max-height:56vh}
+.isbnrow .isbn{font-size:16px;flex-basis:100%}
+.isbnrow .bl-btn{flex:1;justify-content:center}
+.brow .bname input{font-size:16px}

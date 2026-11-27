@@ -42,6 +42,12 @@
   function makeNote(o) {
     const head = ['---', 'home: item', 'added: ' + (o.added || day(new Date()))];
     if (o.photo) head.push('photo: ' + o.photo);
+    const bk = cleanBook(o.book);
+    if (bk) {
+      head.push('isbn: "' + bk.isbn + '"');
+      if (bk.author.length) head.push('author: ' + JSON.stringify(bk.author).replace(/","/g, '", "'));
+      if (bk.published) head.push('published: "' + bk.published + '"');
+    }
     head.push('---');
     const body = [];
     if (o.photo) body.push('![[' + o.photo + ']]');
@@ -86,7 +92,14 @@
     const where = asList(fm.where).map(unlink).filter(Boolean);
     return { added: typeof fm.added === 'string' ? fm.added : null, photo, words: lines.join(NL).trim(), item: fm.home === 'item',
       where: where[0] || null, what: uniq(asList(fm.what).map(unlink).map(cleanKind).filter(Boolean)),
-      with: uniq(asList(fm.with).map(unlink).filter(Boolean)) };
+      with: uniq(asList(fm.with).map(unlink).filter(Boolean)),
+      isbn: typeof fm.isbn === 'string' && /^\d{13}$/.test(fm.isbn) ? fm.isbn : null, author: asList(fm.author).map(unlink), published: typeof fm.published === 'string' ? fm.published : null };
+  }
+  function cleanBook(b) {
+    if (!b || !/^\d{13}$/.test(String(b.isbn || ''))) return null;
+    const names = asList(b.author || b.authors).map((x) => x.replace(/[\u0000-\u001f"\\[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)).filter(Boolean).slice(0, 6);
+    const y = /^(1[5-9]\d\d|20\d\d)$/.test(String(b.year || b.published || '')) ? String(b.year || b.published) : null;
+    return { isbn: String(b.isbn), author: names, published: y };
   }
   const fmList = (arr) => '[' + arr.map((x) => JSON.stringify(x)).join(', ') + ']';
   function setParents(text, p) {
@@ -193,5 +206,5 @@
   }
   return { DIR, PHOTOS, ORIGINALS, MAX_NAME, MAX_WORDS, PHOTO_MAX, PHOTO_Q, cleanName, freeName, notePath, itemName, photoName, okPhoto,
     cleanWords, mergeWords, makeNote, parseNote, withWords, firstLine, sortItems, day,
-    PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
+    cleanBook, PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
 });
