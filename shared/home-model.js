@@ -47,22 +47,119 @@
     if (o.photo) body.push('![[' + o.photo + ']]');
     const w = cleanWords(o.words);
     if (w) body.push(w);
-    return head.join(NL) + NL + NL + body.join(NL + NL) + NL;
+    const t = head.join(NL) + NL + (body.length ? NL + body.join(NL + NL) + NL : '');
+    return o.where || asList(o.what).length || asList(o.with).length ? setParents(t, { where: o.where || null, what: o.what || [], with: o.with || [] }) : t;
   }
+  const unq = (v) => String(v).trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1').replace(/\\"/g, '"');
   function splitNote(text) {
     const s = String(text == null ? '' : text).replace(/\r\n/g, NL);
     const m = /^---\n([\s\S]*?)\n---\n?/.exec(s);
-    const fm = {}, order = [];
-    if (m) for (const line of m[1].split(NL)) { const k = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(line); if (k) { fm[k[1]] = k[2].replace(/^"(.*)"$/, '$1'); order.push(line); } }
+    const fm = {};
+    if (m) {
+      let list = null;
+      for (const line of m[1].split(NL)) {
+        const li = /^\s+-\s*(.*)$/.exec(line);
+        if (li && list) { fm[list].push(unq(li[1])); continue; }
+        const k = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(line);
+        list = null;
+        if (!k) continue;
+        const v = k[2].trim();
+        if (v === '') { fm[k[1]] = []; list = k[1]; }
+        else if (/^\[.*\]$/.test(v)) { const inner = v.slice(1, -1).trim(); fm[k[1]] = inner ? (inner.match(/"(?:[^"\\]|\\.)*"|'[^']*'|[^,]+/g) || []).map(unq).filter(Boolean) : []; }
+        else fm[k[1]] = unq(v);
+      }
+    }
     return { fm, head: m ? m[0].replace(/\n*$/, '') : null, body: m ? s.slice(m[0].length) : s };
   }
+  const PARENTS = ['where', 'what', 'with'];
+  const asList = (v) => (v == null || v === '' ? [] : Array.isArray(v) ? v : [v]).map(String).map((x) => x.trim()).filter(Boolean);
+  const unlink = (s) => { const m = /^\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]$/.exec(String(s || '').trim()); return (m ? m[1] : String(s || '')).trim(); };
+  const link = (name) => '[[' + name + ']]';
+  function uniq(arr) { const seen = new Set(), out = []; for (const x of arr) { const k = String(x).toLowerCase(); if (!seen.has(k)) { seen.add(k); out.push(x); } } return out; }
+  function cleanKind(s) { return String(s == null ? '' : s).replace(/[\u0000-\u001f[\]",#]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40); }
   function parseNote(text) {
     const { fm, body } = splitNote(text);
-    let photo = fm.photo || null;
+    let photo = typeof fm.photo === 'string' && fm.photo ? fm.photo : null;
     const lines = body.split(NL);
     const emb = lines.findIndex((l) => /^\s*!\[\[[^\]]+\.(png|jpe?g|webp|gif)(\|[^\]]*)?\]\]\s*$/i.test(l));
     if (emb >= 0) { if (!photo) photo = /!\[\[([^\]|]+)/.exec(lines[emb])[1].trim(); lines.splice(emb, 1); }
-    return { added: fm.added || null, photo, words: lines.join(NL).trim(), item: fm.home === 'item' };
+    const where = asList(fm.where).map(unlink).filter(Boolean);
+    return { added: typeof fm.added === 'string' ? fm.added : null, photo, words: lines.join(NL).trim(), item: fm.home === 'item',
+      where: where[0] || null, what: uniq(asList(fm.what).map(unlink).map(cleanKind).filter(Boolean)),
+      with: uniq(asList(fm.with).map(unlink).filter(Boolean)) };
+  }
+  const fmList = (arr) => '[' + arr.map((x) => JSON.stringify(x)).join(', ') + ']';
+  function setParents(text, p) {
+    const s = String(text == null ? '' : text).replace(/\r\n/g, NL);
+    const m = /^---\n([\s\S]*?)\n---\n?/.exec(s);
+    const lines = m ? m[1].split(NL) : ['home: item'];
+    const body = m ? s.slice(m[0].length) : s;
+    const keep = [], old = {};
+    let skip = null;
+    for (const line of lines) {
+      if (skip && /^\s+-/.test(line)) continue;
+      skip = null;
+      const k = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(line);
+      if (k && PARENTS.includes(k[1]) && Object.prototype.hasOwnProperty.call(p || {}, k[1])) { old[k[1]] = true; if (k[2].trim() === '') skip = k[1]; continue; }
+      keep.push(line);
+    }
+    const add = [];
+    if (p && 'where' in p) { const w = p.where ? cleanName(unlink(p.where)) : ''; if (w) add.push('where: ' + fmList([link(w)])); }
+    if (p && 'what' in p) { const w = uniq(asList(p.what).map(cleanKind).filter(Boolean)); if (w.length) add.push('what: ' + fmList(w)); }
+    if (p && 'with' in p) { const w = uniq(asList(p.with).map(unlink).map(cleanName).filter(Boolean)); if (w.length) add.push('with: ' + fmList(w.map(link))); }
+    let at = keep.length;
+    for (let i = keep.length - 1; i >= 0; i--) if (/^(home|added|photo):/.test(keep[i])) { at = i + 1; break; }
+    keep.splice(at, 0, ...add);
+    return '---' + NL + keep.join(NL) + NL + '---' + NL + (m ? (body.startsWith(NL) ? '' : NL) + body : NL + body);
+  }
+  const lower = (s) => String(s || '').toLowerCase();
+  function byName(items) { const m = new Map(); for (const it of items) m.set(lower(it.name), it); return m; }
+  function inside(items, name) { return items.filter((it) => it.where && lower(it.where) === lower(name)); }
+  function pathOf(items, name) {
+    const by = byName(items), out = [], seen = new Set([lower(name)]);
+    let cur = by.get(lower(name));
+    while (cur && cur.where && !seen.has(lower(cur.where))) {
+      seen.add(lower(cur.where));
+      const up = by.get(lower(cur.where));
+      out.push(up ? up.name : cur.where);
+      cur = up;
+    }
+    return out;
+  }
+  function canPlace(items, name, where) {
+    if (!where) return true;
+    if (lower(where) === lower(name)) return false;
+    return !pathOf(items, where).some((x) => lower(x) === lower(name));
+  }
+  function countInside(items, name) {
+    let n = 0; const seen = new Set([lower(name)]), todo = [name];
+    while (todo.length) { const p = todo.pop(); for (const it of inside(items, p)) if (!seen.has(lower(it.name))) { seen.add(lower(it.name)); n++; todo.push(it.name); } }
+    return n;
+  }
+  function checkParents(name, o, items) {
+    const out = {};
+    const real = (n) => { const it = items.find((x) => lower(x.name) === lower(String(n || '').trim())); return it ? it.name : null; };
+    if ('where' in o) {
+      if (o.where) {
+        const w = real(unlink(o.where));
+        if (!w) return { error: 'There is no ' + String(o.where).slice(0, 60) + ' in the Home to put it in.' };
+        if (!canPlace(items, name, w)) return { error: lower(w) === lower(name) ? 'A thing cannot be inside itself.' : name + ' holds ' + w + ', so it cannot go inside it.' };
+        out.where = w;
+      } else out.where = null;
+    }
+    if ('what' in o) out.what = uniq(asList(o.what).map(cleanKind).filter(Boolean)).slice(0, 12);
+    if ('with' in o) out.with = uniq(asList(o.with).map((n) => real(unlink(n))).filter((n) => n && lower(n) !== lower(name))).slice(0, 30);
+    return out;
+  }
+  function topLevel(items) { const by = byName(items); return items.filter((it) => !it.where || !by.has(lower(it.where))); }
+  function kinds(items) { const m = new Map(); for (const it of items) for (const k of it.what || []) if (!m.has(lower(k))) m.set(lower(k), k); return [...m.values()].sort((a, b) => a.localeCompare(b)); }
+  function together(items, name) {
+    const me = items.find((it) => lower(it.name) === lower(name));
+    const out = new Map();
+    for (const w of (me && me.with) || []) out.set(lower(w), w);
+    for (const it of items) if ((it.with || []).some((w) => lower(w) === lower(name))) out.set(lower(it.name), it.name);
+    out.delete(lower(name));
+    return [...out.values()].sort((a, b) => a.localeCompare(b));
   }
   function withWords(text, words) {
     const { head, body } = splitNote(text);
@@ -95,5 +192,6 @@
     return items.slice().sort((a, b) => key(b).localeCompare(key(a)) || a.name.localeCompare(b.name));
   }
   return { DIR, PHOTOS, ORIGINALS, MAX_NAME, MAX_WORDS, PHOTO_MAX, PHOTO_Q, cleanName, freeName, notePath, itemName, photoName, okPhoto,
-    cleanWords, mergeWords, makeNote, parseNote, withWords, firstLine, sortItems, day };
+    cleanWords, mergeWords, makeNote, parseNote, withWords, firstLine, sortItems, day,
+    PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
 });

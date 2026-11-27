@@ -56,3 +56,46 @@ button:disabled{opacity:.38;cursor:default;pointer-events:none}
   padding:10px 16px;border-radius:var(--bl-r);background:#1b1813;border:1px solid var(--edge2);color:var(--text);font-weight:600;font-size:13px;
   transition:opacity .2s,transform .2s;max-width:80vw}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+.list{display:flex;flex-direction:column;gap:14px}
+.seg{display:inline-flex;align-self:flex-start;padding:3px;border-radius:var(--bl-r);border:1px solid var(--edge2);background:#0d0c0a}
+.seg .sg{all:unset;cursor:pointer;padding:7px 14px;border-radius:var(--bl-r-sm);font-weight:600;font-size:12.5px;color:var(--ash)}
+.seg .sg.on{background:linear-gradient(180deg,var(--bl-coal-hi),var(--bl-coal));color:var(--bl-bone);box-shadow:inset 0 0 0 1px var(--bl-coal-line)}
+.seg .sg:focus-visible{outline:1px solid var(--bl-gold);outline-offset:1px}
+.sec{margin:10px 0 0;font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash)}
+.sec .cnt{color:var(--dim);margin-left:6px;letter-spacing:.04em}
+.hint{margin:0;color:var(--dim);font-size:13px;line-height:1.5;max-width:560px}
+.thing .ph{position:relative}
+.thing .holds{position:absolute;left:8px;bottom:8px;padding:4px 8px;border-radius:var(--bl-r-sm);background:rgba(6,6,5,.8);color:var(--bl-bone);font-weight:600;font-size:11px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:2px;min-height:30px;padding:0 4px 0 11px;border-radius:var(--bl-r-sm);border:1px solid rgba(243,237,225,.22);background:#14120f;color:var(--bl-bone);font-weight:600;font-size:13px}
+.chip .ct{all:unset;padding:5px 2px}
+.chip.link .ct{cursor:pointer}
+.chip.link .ct:hover{color:var(--bl-gold-hi)}
+.chip .cx{all:unset;cursor:pointer;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;color:var(--ash)}
+.chip .cx:hover{color:var(--bl-bone);background:rgba(243,237,225,.08)}
+.chip:not(:has(.cx)){padding-right:11px}
+.kinds .kin{flex:1;min-width:120px;font:600 14px var(--bl-ui);color:var(--bl-bone);background:#0f0e0b;border:1px solid var(--edge2);border-radius:var(--bl-r-sm);padding:7px 10px;outline:none}
+.kinds .kin:focus{border-color:rgba(217,165,46,.6)}
+.kinds .kin::placeholder{color:var(--dim)}
+.side{display:flex;flex-direction:column;gap:16px}
+.one h1{margin-bottom:2px}
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:var(--ash)}
+.path .pl{all:unset;cursor:pointer;color:var(--ash)}
+.path button.pl:hover{color:var(--bl-gold-hi)}
+.path .sep{color:var(--dim)}
+.inhere{margin-top:30px!important;display:flex;flex-direction:column;gap:12px}
+.chooser{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:20px}
+.ch-panel{width:min(480px,100%);max-height:min(640px,86vh);display:flex;flex-direction:column;border-radius:var(--bl-r);background:#13110e;border:1px solid var(--edge2);box-shadow:0 30px 80px -20px rgba(0,0,0,.9);overflow:hidden}
+.ch-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 12px 8px 18px}
+.ch-t{font-weight:700;font-size:15px;color:var(--bl-bone);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-q{margin:0 14px 10px;font:600 15px var(--bl-ui);color:var(--bl-bone);background:#0f0e0b;border:1px solid var(--edge2);border-radius:var(--bl-r-sm);padding:10px 12px;outline:none}
+.ch-q:focus{border-color:rgba(217,165,46,.6)}
+.ch-list{overflow:auto;padding:0 8px 10px;display:flex;flex-direction:column;gap:2px}
+.ch-row{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:var(--bl-r-sm)}
+.ch-row:hover,.ch-row:focus-visible{background:rgba(243,237,225,.06)}
+.ch-row .nm{font-weight:700;font-size:14px;color:var(--bl-bone)}
+.ch-row .sb{font-weight:600;font-size:12px;color:var(--dim)}
+.ch-row.on .nm{color:var(--bl-gold-hi)}
+.ch-row.none .nm{color:var(--ash);font-weight:600}
+.ch-row.new .nm{color:var(--bl-gold)}
+.ch-empty{color:var(--dim);font-size:13px;padding:10px 12px;margin:0}

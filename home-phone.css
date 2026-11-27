@@ -14,3 +14,16 @@ body[data-app="home"]{display:block}
 .one .big img{max-height:62vh}
 .one h1{font-size:22px;margin-bottom:12px}
 .one .row .bl-btn{flex:1;justify-content:center}
+.seg{align-self:stretch;display:flex}
+.seg .sg{flex:1;text-align:center;padding:10px 0;font-size:14px}
+.chip{min-height:38px;font-size:14px}
+.chip .cx{width:32px;height:32px}
+.kinds .kin{font-size:16px;padding:9px 10px}
+.bl-btn.sm{min-height:40px}
+.side{gap:14px}
+.path{font-size:13px}
+.inhere{margin-top:22px!important}
+.chooser{place-items:end stretch;padding:0}
+.ch-panel{width:100%;max-height:82vh;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+.ch-q{font-size:16px}
+.ch-row{min-height:52px;justify-content:center}
