@@ -95,7 +95,7 @@
       where: where[0] || null, what: uniq(asList(fm.what).map(unlink).map(cleanKind).filter(Boolean)),
       with: uniq(asList(fm.with).map(unlink).filter(Boolean)),
       isbn: typeof fm.isbn === 'string' && /^\d{13}$/.test(fm.isbn) ? fm.isbn : null, author: asList(fm.author).map(unlink), published: typeof fm.published === 'string' ? fm.published : null,
-      placeholder: fm.placeholder === 'true' };
+      placeholder: fm.placeholder === 'true', count: cleanCount(fm.count) };
   }
   const PLACEHOLDER_WORDS = 'A placeholder: give it a photo and a few words, or remove it.';
   const PLACEHOLDERS = [
@@ -142,17 +142,47 @@
       if (skip && /^\s+-/.test(line)) continue;
       skip = null;
       const k = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(line);
-      if (k && PARENTS.includes(k[1]) && Object.prototype.hasOwnProperty.call(p || {}, k[1])) { old[k[1]] = true; if (k[2].trim() === '') skip = k[1]; continue; }
+      if (k && (PARENTS.includes(k[1]) || k[1] === 'count') && Object.prototype.hasOwnProperty.call(p || {}, k[1])) { old[k[1]] = true; if (k[2].trim() === '') skip = k[1]; continue; }
       keep.push(line);
     }
     const add = [];
     if (p && 'where' in p) { const w = p.where ? cleanName(unlink(p.where)) : ''; if (w) add.push('where: ' + fmList([link(w)])); }
     if (p && 'what' in p) { const w = uniq(asList(p.what).map(cleanKind).filter(Boolean)); if (w.length) add.push('what: ' + fmList(w)); }
     if (p && 'with' in p) { const w = uniq(asList(p.with).map(unlink).map(cleanName).filter(Boolean)); if (w.length) add.push('with: ' + fmList(w.map(link))); }
+    if (p && 'count' in p) { const n = cleanCount(p.count); if (n > 1) add.push('count: ' + n); }
     let at = keep.length;
     for (let i = keep.length - 1; i >= 0; i--) if (/^(home|added|photo):/.test(keep[i])) { at = i + 1; break; }
     keep.splice(at, 0, ...add);
     return '---' + NL + keep.join(NL) + NL + '---' + NL + (m ? (body.startsWith(NL) ? '' : NL) + body : NL + body);
+  }
+  function cleanCount(v) { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 1 ? Math.min(n, 9999) : 1; }
+  function renamePlan(items, from, to) {
+    const out = [];
+    for (const it of items) {
+      if (lower(it.name) === lower(from)) continue;
+      const p = {};
+      if (it.where && lower(it.where) === lower(from)) p.where = to;
+      if ((it.with || []).some((w) => lower(w) === lower(from))) p.with = it.with.map((w) => (lower(w) === lower(from) ? to : w));
+      if (Object.keys(p).length) out.push({ name: it.name, p });
+    }
+    return out;
+  }
+  function search(items, q) {
+    const t = lower(q).trim(); if (!t) return [];
+    const terms = t.split(/\s+/).filter(Boolean);
+    const scored = [];
+    for (const it of items) {
+      const name = lower(it.name), kinds = lower((it.what || []).join(' ')), place = lower(pathOf(items, it.name).join(' '));
+      const book = lower([].concat(it.author || [], it.isbn || []).join(' ')), words = lower(it.words);
+      let s = 0;
+      for (const w of terms) {
+        const v = name.startsWith(w) ? 40 : name.includes(w) ? 25 : kinds.includes(w) ? 15 : book.includes(w) ? 12 : place.includes(w) ? 8 : words.includes(w) ? 4 : 0;
+        if (!v) { s = 0; break; }
+        s += v;
+      }
+      if (s) scored.push({ it, s });
+    }
+    return scored.sort((a, b) => b.s - a.s || a.it.name.localeCompare(b.it.name)).map((x) => x.it);
   }
   const lower = (s) => String(s || '').toLowerCase();
   function byName(items) { const m = new Map(); for (const it of items) m.set(lower(it.name), it); return m; }
@@ -191,6 +221,7 @@
     }
     if ('what' in o) out.what = uniq(asList(o.what).map(cleanKind).filter(Boolean)).slice(0, 12);
     if ('with' in o) out.with = uniq(asList(o.with).map((n) => real(unlink(n))).filter((n) => n && lower(n) !== lower(name))).slice(0, 30);
+    if ('count' in o) out.count = cleanCount(o.count);
     return out;
   }
   function topLevel(items) { const by = byName(items); return items.filter((it) => !it.where || !by.has(lower(it.where))); }
@@ -249,5 +280,5 @@
   }
   return { DIR, PHOTOS, ORIGINALS, MAX_NAME, MAX_WORDS, PHOTO_MAX, PHOTO_Q, cleanName, freeName, notePath, itemName, photoName, okPhoto,
     cleanWords, mergeWords, makeNote, parseNote, withWords, firstLine, sortItems, day,
-    PLACEHOLDERS, PLACEHOLDER_WORDS, removalPlan, withPhoto, cleanBook, PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
+    cleanCount, renamePlan, search, PLACEHOLDERS, PLACEHOLDER_WORDS, removalPlan, withPhoto, cleanBook, PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
 });

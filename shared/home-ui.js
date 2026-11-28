@@ -16,6 +16,7 @@
   const lower = (s) => String(s || '').toLowerCase();
   const find = (name) => items.find((x) => lower(x.name) === lower(name)) || null;
   let items = [], screen = { k: 'list' }, trail = [], urls = new Map(), seq = 0;
+  let query = '';
   let mode = 'place'; try { if (localStorage.getItem('home.view') === 'all') mode = 'all'; } catch (e) {   }
   async function photoUrl(file) {
     if (!file) return null;
@@ -80,7 +81,8 @@
     if (!r || !r.ok) { view.innerHTML = ''; view.appendChild(el('div', 'empty', '<h1>The Home could not open</h1><p>' + esc(r && r.error || 'Unknown') + '</p>')); return; }
     items = r.items || [];
     if (screen.k === 'books') return;
-    if (redraw !== true && (screen.k === 'add' || (screen.k === 'item' && editing()) || chooserOpen())) return;
+    const typingIn = () => { const a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && view.contains(a)); };
+    if (redraw !== true && (screen.k === 'add' || (screen.k === 'item' && editing()) || chooserOpen() || typingIn())) return;
     draw();
   }
   function card(it, opts) {
@@ -89,6 +91,7 @@
     const n = HM.countInside(items, it.name);
     if (n) ph.appendChild(el('span', 'holds', n + ' inside'));
     if (it.placeholder) { ph.appendChild(el('span', 'holds ptag', 'Placeholder')); c.classList.add('placeholder'); }
+    else if (it.count > 1) ph.appendChild(el('span', 'holds ptag count', '× ' + it.count));
     const line = opts && opts.where && it.where ? 'In ' + it.where : HM.firstLine(it.words, 70);
     const tx = el('span', 'tx', '<span class="nm">' + esc(it.name) + '</span>' + (line ? '<span class="ln">' + esc(line) + '</span>' : ''));
     c.append(ph, tx);
@@ -106,23 +109,39 @@
       return;
     }
     const wrap = el('div', 'list');
-    const seg = el('div', 'seg'); seg.setAttribute('role', 'tablist');
-    for (const [k, label] of [['place', 'By place'], ['all', 'Everything']]) {
-      const b = button('sg' + (mode === k ? ' on' : ''), esc(label), () => { mode = k; try { localStorage.setItem('home.view', k); } catch (e) {   } drawList(); });
-      b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', mode === k ? 'true' : 'false');
-      seg.appendChild(b);
-    }
-    wrap.appendChild(seg);
-    if (mode === 'all') wrap.appendChild(grid(items, { where: true }));
-    else {
-      const topl = HM.topLevel(items);
-      const places = topl.filter((it) => HM.countInside(items, it.name)), loose = topl.filter((it) => !HM.countInside(items, it.name));
-      if (places.length) { wrap.appendChild(el('h2', 'sec', 'Places')); wrap.appendChild(grid(places)); }
-      if (loose.length) { wrap.appendChild(el('h2', 'sec', places.length ? 'In no place yet' : 'Your things')); wrap.appendChild(grid(loose)); }
-      if (!places.length) wrap.appendChild(el('p', 'hint', 'Open a thing and choose Where it is to put it in a place: the wardrobe, a shelf, the bedroom. Any thing can hold other things.'));
-    }
-    wrap.appendChild(placeholderBar());
+    const fbox = el('input'); Object.assign(fbox, { type: 'search', value: query, placeholder: 'Find in the Home: a name, a kind, a place, an author...', autocomplete: 'off', enterKeyHint: 'search' }); fbox.className = 'hfind';
+    fbox.setAttribute('aria-label', 'Find in the Home');
+    const body = el('div', 'list');
+    const fill = () => {
+      body.innerHTML = '';
+      if (query.trim()) {
+        const hits = HM.search(items, query);
+        body.appendChild(el('h2', 'sec', hits.length ? hits.length + ' found' : 'Nothing found for "' + esc(query.trim()) + '"'));
+        if (hits.length) body.appendChild(grid(hits, { where: true }));
+        return;
+      }
+      const seg = el('div', 'seg'); seg.setAttribute('role', 'tablist');
+      for (const [k, label] of [['place', 'By place'], ['all', 'Everything']]) {
+        const b = button('sg' + (mode === k ? ' on' : ''), esc(label), () => { mode = k; try { localStorage.setItem('home.view', k); } catch (e) {   } fill(); });
+        b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', mode === k ? 'true' : 'false');
+        seg.appendChild(b);
+      }
+      body.appendChild(seg);
+      if (mode === 'all') body.appendChild(grid(items, { where: true }));
+      else {
+        const topl = HM.topLevel(items);
+        const places = topl.filter((it) => HM.countInside(items, it.name)), loose = topl.filter((it) => !HM.countInside(items, it.name));
+        if (places.length) { body.appendChild(el('h2', 'sec', 'Places')); body.appendChild(grid(places)); }
+        if (loose.length) { body.appendChild(el('h2', 'sec', places.length ? 'In no place yet' : 'Your things')); body.appendChild(grid(loose)); }
+        if (!places.length) body.appendChild(el('p', 'hint', 'Open a thing and choose Where it is to put it in a place: the wardrobe, a shelf, the bedroom. Any thing can hold other things.'));
+      }
+      body.appendChild(placeholderBar());
+    };
+    fbox.addEventListener('input', () => { query = fbox.value; fill(); });
+    fbox.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fbox.value) { e.stopPropagation(); fbox.value = ''; query = ''; fill(); } });
+    wrap.append(fbox, body);
     view.appendChild(wrap);
+    fill();
   }
   function placeholderBar() {
     const bar = el('section', 'pbar');
@@ -515,7 +534,33 @@
       path.forEach((p, i) => { if (i) pth.appendChild(el('span', 'sep', '›')); pth.appendChild(find(p) ? button('pl', esc(p), () => go({ k: 'item', name: find(p).name })) : el('span', 'pl', esc(p))); });
       side.appendChild(pth);
     }
-    side.appendChild(el('h1', '', esc(it.name)));
+    const nameRow = el('div', 'namerow');
+    const showName = () => {
+      nameRow.innerHTML = '';
+      nameRow.appendChild(el('h1', '', esc(it.name)));
+      const rn = button('bl-btn ghost sm', IC('pen', 13) + '<span>Rename</span>', () => {
+        nameRow.innerHTML = '';
+        const inp = el('input'); Object.assign(inp, { type: 'text', value: it.name, maxLength: HM.MAX_NAME, autocomplete: 'off', enterKeyHint: 'done' }); inp.className = 'rename';
+        inp.setAttribute('aria-label', 'New name'); inp.setAttribute('autocapitalize', 'sentences');
+        const keep = async () => {
+          const to = HM.cleanName(inp.value);
+          if (!to || to === it.name) { showName(); return; }
+          if (editing()) await saveWords(true);
+          const r = await API.rename(it.name, to).catch((e) => ({ ok: false, error: String(e && e.message || e) }));
+          if (!r || !r.ok) { toast((r && r.error) || 'It could not be renamed.', 5000); inp.focus(); return; }
+          for (const s of trail) { if (s.k === 'item' && s.name === it.name) s.name = r.name; if (s.where === it.name) s.where = r.name; }
+          toast(it.name + ' is now ' + r.name + '.');
+          screen = { k: 'item', name: r.name };
+          await load(true);
+        };
+        inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); keep(); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); showName(); } });
+        nameRow.append(inp, button('bl-btn gold sm', 'Save', keep), button('bl-btn ghost sm', 'Cancel', showName));
+        inp.focus(); inp.select();
+      });
+      nameRow.appendChild(rn);
+    };
+    showName();
+    side.appendChild(nameRow);
     const fw = el('div', 'field', '<span>Where</span>'), wr = el('div', 'chips');
     if (it.where) wr.appendChild(chip(it.where, find(it.where) ? () => go({ k: 'item', name: find(it.where).name }) : null, () => setParents(it, { where: null }, it.name + ' is in no place now.')));
     wr.appendChild(button('bl-btn coal sm', IC(it.where ? 'split' : 'plus', 13) + '<span>' + (it.where ? 'Move' : 'Choose a place') + '</span>', () => choose({
@@ -564,7 +609,18 @@
       toast(it.name + ' is removed' + (API.phone ? '' : ' (kept in the vault trash)') + (r.moved ? '; ' + r.moved + (r.moved === 1 ? ' thing' : ' things') + ' moved to ' + (r.up || 'no place') : '') + '.', 5000);
       await load(true); back();
     }));
-    side.append(fw, fk, fwi, wl, row);
+    const fc = el('div', 'field', '<span>How many</span>'), cr = el('div', 'count');
+    const num = el('input'); Object.assign(num, { type: 'number', min: 1, max: 9999, step: 1, value: it.count || 1, inputMode: 'numeric' }); num.setAttribute('aria-label', 'How many');
+    let countT = null;
+    const setCount = (n) => {
+      n = HM.cleanCount(n); num.value = n;
+      clearTimeout(countT);
+      countT = setTimeout(async () => { if (n !== (it.count || 1)) { const ok = await setParents(it, { count: n }); if (ok) it.count = n; } }, 500);
+    };
+    cr.append(button('bl-btn coal sm', IC('minus', 13), () => setCount(+num.value - 1)), num, button('bl-btn coal sm', IC('plus', 13), () => setCount(+num.value + 1)));
+    num.addEventListener('change', () => setCount(num.value));
+    fc.appendChild(cr);
+    side.append(fw, fk, fc, fwi, wl, row);
     box.append(ph, side);
     view.appendChild(box);
     const ins = HM.inside(items, it.name);

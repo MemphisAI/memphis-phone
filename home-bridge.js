@@ -6,7 +6,7 @@
   async function readItem(name) {
     const text = await E.read(HM.notePath(name)); if (text == null) return null;
     const it = HM.parseNote(text);
-    return { name, words: it.placeholder && it.words === HM.PLACEHOLDER_WORDS ? '' : it.words, placeholder: it.placeholder, photo: it.photo, added: it.added, where: it.where, what: it.what, with: it.with, isbn: it.isbn, author: it.author, published: it.published, text };
+    return { name, words: it.placeholder && it.words === HM.PLACEHOLDER_WORDS ? '' : it.words, placeholder: it.placeholder, count: it.count, photo: it.photo, added: it.added, where: it.where, what: it.what, with: it.with, isbn: it.isbn, author: it.author, published: it.published, text };
   }
   async function list() {
     if (!(await E.signedIn())) { location.href = 'index.html'; return { ok: false, error: 'Not signed in.' }; }
@@ -66,7 +66,7 @@
     const text = HM.setParents(it.text, c);
     try { await E.write(HM.notePath(it.name), text); } catch (e) { return { ok: false, error: String(e.message || e) }; }
     const now = HM.parseNote(text);
-    return { ok: true, where: now.where, what: now.what, with: now.with };
+    return { ok: true, where: now.where, what: now.what, with: now.with, count: now.count };
   }
   async function setPhoto(name, o) {
     const it = await readItem(String(name || ''));
@@ -90,6 +90,21 @@
     } catch (e) { return { ok: false, error: String(e.message || e) }; }
     return { ok: true, moved, up: it.where || null };
   }
+  async function rename(name, newName) {
+    const it = await readItem(String(name || ''));
+    if (!it) return { ok: false, error: 'That thing is no longer in the Home.' };
+    const to = HM.cleanName(newName);
+    if (!to) return { ok: false, error: 'Give it a name.' };
+    if (to === it.name) return { ok: true, name: to };
+    const all = (await list()).items || [];
+    if (all.some((x) => x.name !== it.name && x.name.toLowerCase() === to.toLowerCase())) return { ok: false, error: 'There is already a thing called ' + to + ' in the Home.' };
+    try {
+      await E.write(HM.notePath(to), it.text);
+      await E.remove(HM.notePath(it.name));
+      for (const c of HM.renamePlan(all, it.name, to)) { const o = await readItem(c.name); if (o) await E.write(HM.notePath(c.name), HM.setParents(o.text, c.p)); }
+    } catch (e) { return { ok: false, error: String(e.message || e) }; }
+    return { ok: true, name: to };
+  }
   async function placeholders(how) {
     if (how === 'remove') {
       let n = 0;
@@ -109,5 +124,5 @@
   async function book(isbn) { return window.HomeBooks.findBook(String(isbn || '').slice(0, 40), window.fetch.bind(window)); }
   function onChanged(fn) { const f = () => fn(); document.addEventListener('phone-synced', f); return () => document.removeEventListener('phone-synced', f); }
   document.addEventListener('focusin', (e) => { if (e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName) && e.target.type !== 'file') setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300); });
-  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, setPhoto, remove, placeholders, book, onChanged };
+  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, setPhoto, remove, rename, placeholders, book, onChanged };
 })();

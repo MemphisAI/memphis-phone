@@ -31,3 +31,7 @@ body[data-app="home"]{display:block}
 .isbnrow .isbn{font-size:16px;flex-basis:100%}
 .isbnrow .bl-btn{flex:1;justify-content:center}
 .brow .bname input{font-size:16px}
+.hfind{font-size:16px;padding:12px 14px}
+.namerow .rename{font-size:18px;flex-basis:100%}
+.count input{font-size:18px;width:90px;padding:8px}
+.count .bl-btn{min-width:48px;justify-content:center}
