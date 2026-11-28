@@ -41,6 +41,7 @@
   }
   function makeNote(o) {
     const head = ['---', 'home: item', 'added: ' + (o.added || day(new Date()))];
+    if (o.placeholder) head.push('placeholder: true');
     if (o.photo) head.push('photo: ' + o.photo);
     const bk = cleanBook(o.book);
     if (bk) {
@@ -93,7 +94,35 @@
     return { added: typeof fm.added === 'string' ? fm.added : null, photo, words: lines.join(NL).trim(), item: fm.home === 'item',
       where: where[0] || null, what: uniq(asList(fm.what).map(unlink).map(cleanKind).filter(Boolean)),
       with: uniq(asList(fm.with).map(unlink).filter(Boolean)),
-      isbn: typeof fm.isbn === 'string' && /^\d{13}$/.test(fm.isbn) ? fm.isbn : null, author: asList(fm.author).map(unlink), published: typeof fm.published === 'string' ? fm.published : null };
+      isbn: typeof fm.isbn === 'string' && /^\d{13}$/.test(fm.isbn) ? fm.isbn : null, author: asList(fm.author).map(unlink), published: typeof fm.published === 'string' ? fm.published : null,
+      placeholder: fm.placeholder === 'true' };
+  }
+  const PLACEHOLDER_WORDS = 'A placeholder: give it a photo and a few words, or remove it.';
+  const PLACEHOLDERS = [
+    { name: 'Living room', what: ['Room'] }, { name: 'Bedroom', what: ['Room'] }, { name: 'Kitchen', what: ['Room'] },
+    { name: 'Bathroom', what: ['Room'] }, { name: 'Hallway', what: ['Room'] }, { name: 'Study', what: ['Room'] },
+    { name: 'Couch', where: 'Living room', what: ['Furniture'] }, { name: 'Coffee table', where: 'Living room', what: ['Furniture'] },
+    { name: 'TV', where: 'Living room', what: ['Appliance'] }, { name: 'Sonos speaker', where: 'Living room', what: ['Appliance', 'Speaker'] },
+    { name: 'Floor lamp', where: 'Living room', what: ['Appliance', 'Lamp'] }, { name: 'Bookshelf', where: 'Living room', what: ['Furniture'] },
+    { name: 'Bed', where: 'Bedroom', what: ['Furniture'] }, { name: 'Wardrobe', where: 'Bedroom', what: ['Furniture'] },
+    { name: 'Bedside table', where: 'Bedroom', what: ['Furniture'] }, { name: 'Bedside lamp', where: 'Bedroom', what: ['Appliance', 'Lamp'] },
+    { name: 'Fridge', where: 'Kitchen', what: ['Appliance'] }, { name: 'Kitchen table', where: 'Kitchen', what: ['Furniture'] },
+    { name: 'Bathroom cabinet', where: 'Bathroom', what: ['Furniture'] },
+    { name: 'Shoe rack', where: 'Hallway', what: ['Furniture'] }, { name: 'Robot vacuum', where: 'Hallway', what: ['Appliance'] },
+    { name: 'Desk', where: 'Study', what: ['Furniture'] }, { name: 'Whiteboard', where: 'Study' }, { name: 'Little garbage can', where: 'Study' },
+  ];
+  function removalPlan(items, name) {
+    const me = items.find((x) => lower(x.name) === lower(name));
+    const up = me && me.where && lower(me.where) !== lower(name) ? me.where : null;
+    const out = [];
+    for (const it of items) {
+      if (lower(it.name) === lower(name)) continue;
+      const p = {};
+      if (it.where && lower(it.where) === lower(name)) p.where = up;
+      if ((it.with || []).some((w) => lower(w) === lower(name))) p.with = it.with.filter((w) => lower(w) !== lower(name));
+      if (Object.keys(p).length) out.push({ name: it.name, p });
+    }
+    return out;
   }
   function cleanBook(b) {
     if (!b || !/^\d{13}$/.test(String(b.isbn || ''))) return null;
@@ -177,7 +206,7 @@
   function withPhoto(text, file) {
     const s = String(text == null ? '' : text).replace(/\r\n/g, NL);
     const m = /^---\n([\s\S]*?)\n---\n?/.exec(s);
-    const head = m ? m[1].split(NL).filter((l) => !/^photo:/.test(l)) : ['home: item'];
+    const head = m ? m[1].split(NL).filter((l) => !/^(photo|placeholder):/.test(l)) : ['home: item'];
     let at = head.length; for (let i = head.length - 1; i >= 0; i--) if (/^(home|added):/.test(head[i])) { at = i + 1; break; }
     head.splice(at, 0, 'photo: ' + file);
     const lines = (m ? s.slice(m[0].length) : s).split(NL);
@@ -188,7 +217,8 @@
     return '---' + NL + head.join(NL) + NL + '---' + NL + NL + body.replace(/^\n+/, '');
   }
   function withWords(text, words) {
-    const { head, body } = splitNote(text);
+    const sp = splitNote(text), body = sp.body;
+    const head = sp.head == null ? null : sp.head.split(NL).filter((l) => !/^placeholder:/.test(l)).join(NL);
     const lines = body.split(NL);
     const emb = lines.findIndex((l) => /^\s*!\[\[[^\]]+\.(png|jpe?g|webp|gif)(\|[^\]]*)?\]\]\s*$/i.test(l));
     const parts = [];
@@ -219,5 +249,5 @@
   }
   return { DIR, PHOTOS, ORIGINALS, MAX_NAME, MAX_WORDS, PHOTO_MAX, PHOTO_Q, cleanName, freeName, notePath, itemName, photoName, okPhoto,
     cleanWords, mergeWords, makeNote, parseNote, withWords, firstLine, sortItems, day,
-    withPhoto, cleanBook, PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
+    PLACEHOLDERS, PLACEHOLDER_WORDS, removalPlan, withPhoto, cleanBook, PARENTS, cleanKind, unlink, link, setParents, checkParents, inside, pathOf, canPlace, countInside, topLevel, kinds, together };
 });

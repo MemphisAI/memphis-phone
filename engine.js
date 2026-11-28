@@ -74,10 +74,11 @@
       return true;
     }
     async function remove(p) {
-      if (!keep(p) || !SM.isCopy(p)) throw new Error('Only a copy kept beside a page can be removed from the phone.');
+      const home = /^Home\/([^/]+\.md|Photos\/[^/]+)$/.test(String(p || ''));
+      if (!keep(p) || !(SM.isCopy(p) || home)) throw new Error('Only a copy kept beside a page, or a thing in the Home, can be removed from the phone.');
       const f = await store.get('files', p), o = await store.get('outbox', p);
       if (!f) { if (o) { await store.del('outbox', p); tell({ pending: await pending() }); } return !!o; }
-      await store.put('outbox', p, { path: p, text: '', del: true, base: f.sha, baseText: f.text, copy: false, at: iso() });
+      await store.put('outbox', p, { path: p, text: '', del: true, bin: !!f.bin, base: f.sha, baseText: f.bin ? null : f.text, copy: false, at: iso() });
       tell({ pending: await pending() });
       return true;
     }

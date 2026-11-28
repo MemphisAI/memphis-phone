@@ -88,6 +88,7 @@
     const ph = el('span', 'ph'); fillPhoto(ph, it.photo);
     const n = HM.countInside(items, it.name);
     if (n) ph.appendChild(el('span', 'holds', n + ' inside'));
+    if (it.placeholder) { ph.appendChild(el('span', 'holds ptag', 'Placeholder')); c.classList.add('placeholder'); }
     const line = opts && opts.where && it.where ? 'In ' + it.where : HM.firstLine(it.words, 70);
     const tx = el('span', 'tx', '<span class="nm">' + esc(it.name) + '</span>' + (line ? '<span class="ln">' + esc(line) + '</span>' : ''));
     c.append(ph, tx);
@@ -120,7 +121,40 @@
       if (loose.length) { wrap.appendChild(el('h2', 'sec', places.length ? 'In no place yet' : 'Your things')); wrap.appendChild(grid(loose)); }
       if (!places.length) wrap.appendChild(el('p', 'hint', 'Open a thing and choose Where it is to put it in a place: the wardrobe, a shelf, the bedroom. Any thing can hold other things.'));
     }
+    wrap.appendChild(placeholderBar());
     view.appendChild(wrap);
+  }
+  function placeholderBar() {
+    const bar = el('section', 'pbar');
+    const left = items.filter((x) => x.placeholder).length;
+    if (!left) {
+      bar.appendChild(el('p', 'hint', 'Want a start? Placeholders fill the Home with rooms and everyday things (a couch, the wardrobe, a lamp) for you to give a photo and a few words, or to remove.'));
+      bar.appendChild(button('bl-btn coal sm', IC('plus', 13) + '<span>Add placeholders</span>', async (e) => {
+        e.currentTarget.disabled = true;
+        const r = await API.placeholders('add').catch((x) => ({ ok: false, error: String(x && x.message || x) }));
+        if (!r || !r.ok) toast((r && r.error) || 'They could not be added.', 5000);
+        else toast(r.added ? r.added + ' placeholders added. Open one to fill it in, or remove it.' : 'Every placeholder is there already.', 5000);
+        mode = 'place'; await load(true);
+      }));
+    } else {
+      bar.appendChild(el('p', 'hint', left + (left === 1 ? ' placeholder is' : ' placeholders are') + ' waiting: open one to give it a photo or a few words, and it becomes yours.'));
+      bar.appendChild(twice('bl-btn ghost sm danger', 'Remove all placeholders', 'Tap again to remove ' + left, async () => {
+        const r = await API.placeholders('remove').catch((x) => ({ ok: false, error: String(x && x.message || x) }));
+        if (!r || !r.ok) toast((r && r.error) || 'They could not be removed.', 5000);
+        else toast(r.removed + ' placeholders removed' + (API.phone ? '.' : ' (to the vault trash).'), 4000);
+        await load(true);
+      }));
+    }
+    return bar;
+  }
+  function twice(cls, label, again, fn) {
+    let armed = null;
+    const b = button(cls, '<span>' + esc(label) + '</span>', async () => {
+      if (!armed) { b.classList.add('armed'); b.innerHTML = '<span>' + esc(again) + '</span>'; armed = setTimeout(() => { armed = null; b.classList.remove('armed'); b.innerHTML = '<span>' + esc(label) + '</span>'; }, 4000); return; }
+      clearTimeout(armed); armed = null; b.disabled = true;
+      await fn();
+    });
+    return b;
   }
   let chooser = null;
   const chooserOpen = () => !!(chooser && chooser.isConnected);
@@ -522,6 +556,14 @@
     ta.addEventListener('blur', () => saveWords(true));
     row.appendChild(save);
     if (API.openNote) row.appendChild(button('bl-btn coal', IC('document', 14) + '<span>Open in Obsidian</span>', () => API.openNote(it.name)));
+    const nIn = HM.inside(items, it.name).length;
+    row.appendChild(twice('bl-btn ghost danger', 'Remove from the Home', nIn ? 'Tap again: the ' + nIn + ' inside move to ' + (it.where || 'no place') : 'Tap again to remove', async () => {
+      if (editing()) edit.base = edit.ta.value;
+      const r = await API.remove(it.name).catch((x) => ({ ok: false, error: String(x && x.message || x) }));
+      if (!r || !r.ok) { toast((r && r.error) || 'It could not be removed.', 5000); return; }
+      toast(it.name + ' is removed' + (API.phone ? '' : ' (kept in the vault trash)') + (r.moved ? '; ' + r.moved + (r.moved === 1 ? ' thing' : ' things') + ' moved to ' + (r.up || 'no place') : '') + '.', 5000);
+      await load(true); back();
+    }));
     side.append(fw, fk, fwi, wl, row);
     box.append(ph, side);
     view.appendChild(box);

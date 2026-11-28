@@ -6,7 +6,7 @@
   async function readItem(name) {
     const text = await E.read(HM.notePath(name)); if (text == null) return null;
     const it = HM.parseNote(text);
-    return { name, words: it.words, photo: it.photo, added: it.added, where: it.where, what: it.what, with: it.with, isbn: it.isbn, author: it.author, published: it.published, text };
+    return { name, words: it.placeholder && it.words === HM.PLACEHOLDER_WORDS ? '' : it.words, placeholder: it.placeholder, photo: it.photo, added: it.added, where: it.where, what: it.what, with: it.with, isbn: it.isbn, author: it.author, published: it.published, text };
   }
   async function list() {
     if (!(await E.signedIn())) { location.href = 'index.html'; return { ok: false, error: 'Not signed in.' }; }
@@ -43,7 +43,7 @@
       photoFile = HM.photoName(name, when, 'jpg');
       try { await E.writeBin(HM.PHOTOS + '/' + photoFile, s); } catch (e) { return { ok: false, error: String(e.message || e) }; }
     }
-    try { await E.write(HM.notePath(name), HM.makeNote({ added: HM.day(new Date(when)), photo: photoFile, words: o.words, where: p.where, what: p.what, with: p.with, book: bk })); }
+    try { await E.write(HM.notePath(name), HM.makeNote({ added: HM.day(new Date(when)), photo: photoFile, words: o.words, where: p.where, what: p.what, with: p.with, book: bk, placeholder: !!o.placeholder })); }
     catch (e) { if (photoFile) await E.discard(HM.PHOTOS + '/' + photoFile).catch(() => {}); return { ok: false, error: String(e.message || e) }; }
     return { ok: true, name };
   }
@@ -78,8 +78,36 @@
     catch (e) { return { ok: false, error: String(e.message || e) }; }
     return { ok: true, photo: file };
   }
+  async function remove(name) {
+    const it = await readItem(String(name || ''));
+    if (!it) return { ok: false, error: 'That thing is no longer in the Home.' };
+    const all = (await list()).items || [];
+    let moved = 0;
+    try {
+      for (const c of HM.removalPlan(all, it.name)) { const o = await readItem(c.name); if (o) { await E.write(HM.notePath(c.name), HM.setParents(o.text, c.p)); if ('where' in c.p) moved++; } }
+      await E.remove(HM.notePath(it.name));
+      if (it.photo && HM.okPhoto(it.photo) && !all.some((x) => x.name !== it.name && x.photo === it.photo)) await E.remove(HM.PHOTOS + '/' + it.photo).catch(() => false);
+    } catch (e) { return { ok: false, error: String(e.message || e) }; }
+    return { ok: true, moved, up: it.where || null };
+  }
+  async function placeholders(how) {
+    if (how === 'remove') {
+      let n = 0;
+      for (const it of ((await list()).items || []).filter((x) => x.placeholder)) { const r = await remove(it.name); if (r.ok) n++; }
+      return { ok: true, removed: n };
+    }
+    let n = 0;
+    for (const p of HM.PLACEHOLDERS) {
+      const have = await names();
+      if (have.some((x) => x.toLowerCase() === p.name.toLowerCase())) continue;
+      const room = p.where ? have.find((x) => x.toLowerCase() === p.where.toLowerCase()) || null : null;
+      const r = await add({ name: p.name, what: p.what || [], where: room, words: HM.PLACEHOLDER_WORDS, placeholder: true });
+      if (r.ok) n++;
+    }
+    return { ok: true, added: n };
+  }
   async function book(isbn) { return window.HomeBooks.findBook(String(isbn || '').slice(0, 40), window.fetch.bind(window)); }
   function onChanged(fn) { const f = () => fn(); document.addEventListener('phone-synced', f); return () => document.removeEventListener('phone-synced', f); }
   document.addEventListener('focusin', (e) => { if (e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName) && e.target.type !== 'file') setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300); });
-  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, setPhoto, book, onChanged };
+  window.homeAPI = { phone: true, keepsOriginal: false, list, photo, add, save, parents, setPhoto, remove, placeholders, book, onChanged };
 })();

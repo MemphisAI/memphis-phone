@@ -135,3 +135,10 @@ button:disabled{opacity:.38;cursor:default;pointer-events:none}
 .one button.big.none{display:flex;flex-direction:column;align-items:center;justify-content:center}
 .one button.big.busy{opacity:.55;pointer-events:none}
 .putin{align-self:flex-start}
+.bl-btn.danger{color:#d98a7f}
+.bl-btn.danger:hover{color:#f0a598}
+.bl-btn.danger.armed{color:#1a0f0d;background:#d98a7f;border-color:#d98a7f}
+.thing .ptag{left:auto;right:8px;color:var(--ash);border:1px dashed rgba(243,237,225,.25)}
+.thing.placeholder{border-style:dashed}
+.thing.placeholder .nm{color:var(--ash)}
+.pbar{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--edge)}
